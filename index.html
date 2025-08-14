@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画像放り込み分布図（XY軸）</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- 基本スタイル --- */
+        :root {
+            --bg-color: #1a1a1a;
+            --panel-bg: #2a2a2a;
+            --text-color: #e0e0e0;
+            --text-muted: #9e9e9e;
+            --primary-color: #4a90e2;
+            --border-color: #444;
+            --input-bg: #333;
+            --red: #e94b3c;
+            --blue: #4a90e2;
+            --yellow: #f5a623;
+            --green: #7ed321;
+            --purple: #8e44ad;
+            --orange: #f39c12;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* --- ヘッダー --- */
+        header {
+            background-color: var(--panel-bg);
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        header h1 {
+            font-size: 1.2em;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .top-buttons {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .top-buttons .separator {
+            width: 1px;
+            height: 20px;
+            background-color: var(--border-color);
+            margin: 0 4px;
+        }
+        
+        .top-buttons button.active-purple {
+            background-color: var(--purple);
+            border-color: var(--purple);
+            color: white;
+        }
+        .top-buttons button.active-green {
+            background-color: var(--green);
+            border-color: var(--green);
+            color: white;
+        }
+
+
+        /* --- メインコンテンツ --- */
+        .main-container {
+            display: flex;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        /* --- 左側UIパネル --- */
+        .ui-panel {
+            width: 280px;
+            background-color: var(--panel-bg);
+            padding: 16px;
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .ui-section {
+            margin-bottom: 24px;
+        }
+        
+        .ui-section:last-child {
+            margin-bottom: 0;
+            border-bottom: none;
+        }
+
+        .ui-section h3 {
+            font-size: 1em;
+            font-weight: 500;
+            margin-top: 0;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .accordion-header {
+            cursor: pointer;
+            user-select: none;
+        }
+        .accordion-header::after {
+            content: '▼';
+            font-size: 0.8em;
+            transition: transform 0.2s;
+        }
+        .accordion-header.closed::after {
+            transform: rotate(-90deg);
+        }
+        .accordion-content.closed {
+            display: none;
+        }
+
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85em;
+            margin-bottom: 6px;
+            color: var(--text-muted);
+        }
+        
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group select,
+        .form-group input[type="color"] {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 8px;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 0.9em;
+        }
+
+        .form-group input[type="range"] {
+            width: 100%;
+        }
+        
+        .form-group .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .color-input-wrapper input[type="text"] {
+            flex-grow: 1;
+        }
+        .color-input-wrapper input[type="color"] {
+            padding: 0;
+            width: 100%;
+            height: 32px;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+        
+        .font-style-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .font-style-buttons button {
+            flex-grow: 1;
+        }
+        .font-style-buttons button.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        #bg-drop-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 4px;
+            padding: 20px;
+            text-align: center;
+            color: var(--text-muted);
+            margin-top: 10px;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        #bg-drop-zone.dragover {
+            background-color: rgba(74, 144, 226, 0.2);
+            border-color: var(--primary-color);
+        }
+
+
+        /* --- 編集エリア --- */
+        .canvas-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: auto;
+            padding: 20px;
+            background-image: linear-gradient(45deg, #222 25%, transparent 25%), linear-gradient(-45deg, #222 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #222 75%), linear-gradient(-45deg, transparent 75%, #222 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+
+        canvas {
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            cursor: grab;
+        }
+        canvas:active {
+            cursor: grabbing;
+        }
+
+        /* --- 汎用コンポーネント --- */
+        button {
+            background-color: #3c3c3c;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #4a4a4a;
+        }
+        
+        button:active {
+            background-color: #555;
+        }
+
+        button.primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        button.primary:hover {
+            background-color: #5a9ee6;
+        }
+        
+        button.orange {
+            background-color: var(--orange);
+            border-color: var(--orange);
+            color: white;
+        }
+        button.orange:hover {
+             background-color: #f5b041;
+        }
+        
+        .back-btn-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        button.back-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            font-size: 0.9em;
+            color: var(--text-muted);
+        }
+        button.back-btn:hover {
+            color: var(--text-color);
+        }
+
+        /* --- ヘルプ表示 --- */
+        .help-content {
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+        .help-content h4 {
+            font-size: 1em;
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+        .help-content ul {
+            padding-left: 20px;
+            margin: 0;
+        }
+
+        /* --- 非表示 --- */
+        .hidden {
+            display: none !important;
+        }
+        
+        /* --- モーダル --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background-color: var(--panel-bg);
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .modal-content h3 {
+            margin-top: 0;
+        }
+        
+        .modal-content p {
+            margin-bottom: 24px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 data-lang-key="appTitle">画像放り込み分布図（XY軸）</h1>
+        <div class="top-buttons">
+            <button id="export-btn" data-lang-key="exportImage">画像出力</button>
+            <button id="help-btn" data-lang-key="help">操作説明</button>
+            <div class="separator"></div>
+            <button id="save-btn" data-lang-key="save">保存</button>
+            <button id="load-btn" data-lang-key="load">呼び出し</button>
+            <input type="file" id="load-file-input" class="hidden">
+            <div class="separator"></div>
+            <button id="lang-btn">English</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="ui-panel" id="ui-panel">
+            <!-- 設定項目はJSによって動的に生成されます -->
+        </div>
+        <div class="canvas-container" id="canvas-container">
+            <canvas id="main-canvas"></canvas>
+        </div>
+    </div>
+    
+    <script type="module">
+        // ==================================================================
+        // --- 1. グローバル設定 & 定数 ---
+        // ==================================================================
+        const INITIAL_CANVAS_WIDTH = 810;
+        const INITIAL_CANVAS_HEIGHT = 810;
+        const INITIAL_TILE_SIZE = 80;
+        const DELETE_BUTTON_SIZE = 24;
+
+        // ==================================================================
+        // --- 2. 多言語対応 (Localization) ---
+        // ==================================================================
+        const L10N = {
+            ja: {
+                appTitle: "画像放り込み分布図（XY軸）",
+                save: "保存", load: "呼び出し", exportImage: "画像出力", help: "操作説明",
+                resetToDefaults: "初期設定に戻す", back: "もどる",
+                // UI Panel Titles
+                globalTileSettings: "タイル共通設定",
+                graphAreaSettings: "グラフエリア設定",
+                axisSettings: "軸設定",
+                selectedTileSettings: "選択中タイルの設定",
+                selectedTextSettings: "選択中テキストの設定",
+                helpTitle: "操作説明",
+                exportSettings: "画像出力設定",
+                // Global Tile Settings
+                tileShape: "形状",
+                shapeCircle: "円形", shapeRoundedSquare: "角丸四角形", shapePentagon: "五角形", shapeHexagon: "六角形",
+                tileSize: "サイズ (px)", borderWidth: "枠線の太さ (px)", borderColor: "枠線の色",
+                tileOverlap: "タイルの重なり", overlapAllow: "重複する", overlapForbid: "重複しない",
+                tileBackgroundColor: "背景色", tileBackgroundOpacity: "背景透過率 (%)",
+                // Graph Area Settings
+                backgroundColor: "背景色",
+                backgroundImage: "背景画像",
+                bgImageDrop: "ここに画像をドロップ",
+                bgImageOpacity: "透過率 (%)",
+                bgImageScale: "拡大率 (%)",
+                bgImageOffsetX: "オフセット X",
+                bgImageOffsetY: "オフセット Y",
+                viewMode: "表示範囲", viewModeFull: "マイナスまで", viewModeQuadrant1: "プラスのみ",
+                grid: "補助線", gridStyle: "線の種類", styleSolid: "実線", styleDashed: "点線", styleNone: "表示しない",
+                gridInterval: "間隔 (論理単位)", gridWidth: "線の太さ (px)", gridColor: "線の色",
+                // Axis Settings
+                axisLabel: "ラベル", axisColor: "色", axisWidth: "軸の太さ (px)", axisLabelSize: "ラベルサイズ (px)",
+                axisLabelFont: "フォント", axisLabelStyle: "スタイル", axisLabelShadow: "影",
+                axis_x_neg: "X軸 (マイナス方向)", axis_x_pos: "X軸 (プラス方向)",
+                axis_y_neg: "Y軸 (マイナス方向)", axis_y_pos: "Y軸 (プラス方向)",
+                // Selected Tile Settings
+                imageScale: "画像拡大率 (%)", imageOffsetX: "画像オフセット X", imageOffsetY: "画像オフセット Y",
+                // Selected Text Settings
+                textContent: "テキスト内容", fontSize: "フォントサイズ (px)", fontStyle: "フォントスタイル",
+                bold: "太字", italic: "斜体", fontColor: "フォントの色", textAlign: "行揃え",
+                alignLeft: "左揃え", alignCenter: "中央揃え", alignRight: "右揃え",
+                deleteText: "このテキストを削除",
+                // Export Settings
+                exportFormat: "形式", exportSize: "サイズ",
+                sizeCurrent: "現在のサイズ", size2x: "2倍", sizeCustom: "カスタム",
+                exportWidth: "幅 (px)", exportHeight: "高さ (px)",
+                performExport: "出力実行",
+                // Help Content
+                helpDragDropImage: "画像ファイルをグラフにドラッグ＆ドロップしてタイルを追加します。",
+                helpMoveTile: "タイルをドラッグして移動します。",
+                helpEditText: "テキストをダブルクリックして編集します。",
+                helpAddText: "グラフの何もない領域をダブルクリックしてテキストを追加します。",
+                helpEditAxis: "軸をダブルクリックして設定を編集します。",
+                helpBasicOps: "基本操作", helpTileOps: "タイル操作", helpAxisOps: "軸操作",
+                // Modals & Alerts
+                confirmOverlapChangeTitle: "設定の変更",
+                confirmOverlapChangeMsg: "「重複する」から「重複しない」へは変更できません。この設定を続けますか？",
+                errorTileOutOfBounds: "範囲外へはみ出してしまいます。範囲が足りない場合は軸を拡張して下さい。",
+                confirmLoad: "現在のプロジェクトは破棄されます。新しいプロジェクトを読み込みますか？",
+                yes: "はい", no: "いいえ",
+            },
+            en: {
+                appTitle: "Image Drop Distribution Map (XY-Axis)",
+                save: "Save", load: "Load", exportImage: "Export Image", help: "Help",
+                resetToDefaults: "Reset to Defaults", back: "Back",
+                // UI Panel Titles
+                globalTileSettings: "Global Tile Settings",
+                graphAreaSettings: "Graph Area Settings",
+                axisSettings: "Axis Settings",
+                selectedTileSettings: "Selected Tile Settings",
+                selectedTextSettings: "Selected Text Settings",
+                helpTitle: "How to Use",
+                exportSettings: "Export Settings",
+                // Global Tile Settings
+                tileShape: "Shape",
+                shapeCircle: "Circle", shapeRoundedSquare: "Rounded Square", shapePentagon: "Pentagon", shapeHexagon: "Hexagon",
+                tileSize: "Size (px)", borderWidth: "Border Width (px)", borderColor: "Border Color",
+                tileOverlap: "Tile Overlap", overlapAllow: "Overlap", overlapForbid: "Do not overlap",
+                tileBackgroundColor: "Background Color", tileBackgroundOpacity: "Background Opacity (%)",
+                // Graph Area Settings
+                backgroundColor: "Background Color",
+                backgroundImage: "Background Image",
+                bgImageDrop: "Drop image here",
+                bgImageOpacity: "Opacity (%)",
+                bgImageScale: "Scale (%)",
+                bgImageOffsetX: "Offset X",
+                bgImageOffsetY: "Offset Y",
+                viewMode: "View Mode", viewModeFull: "Full", viewModeQuadrant1: "Positive Only",
+                grid: "Grid Lines", gridStyle: "Line Style", styleSolid: "Solid", styleDashed: "Dashed", styleNone: "None",
+                gridInterval: "Interval (Logical Units)", gridWidth: "Line Width (px)", gridColor: "Line Color",
+                // Axis Settings
+                axisLabel: "Label", axisColor: "Color", axisWidth: "Axis Width (px)", axisLabelSize: "Label Size (px)",
+                axisLabelFont: "Font", axisLabelStyle: "Style", axisLabelShadow: "Shadow",
+                axis_x_neg: "X-Axis (Negative)", axis_x_pos: "X-Axis (Positive)",
+                axis_y_neg: "Y-Axis (Negative)", axis_y_pos: "Y-Axis (Positive)",
+                // Selected Tile Settings
+                imageScale: "Image Scale (%)", imageOffsetX: "Image Offset X", imageOffsetY: "Image Offset Y",
+                // Selected Text Settings
+                textContent: "Text Content", fontSize: "Font Size (px)", fontStyle: "Font Style",
+                bold: "Bold", italic: "Italic", fontColor: "Font Color", textAlign: "Text Align",
+                alignLeft: "Left", alignCenter: "Center", alignRight: "Right",
+                deleteText: "Delete this text",
+                // Export Settings
+                exportFormat: "Format", exportSize: "Size",
+                sizeCurrent: "Current Size", size2x: "2x", sizeCustom: "Custom",
+                exportWidth: "Width (px)", exportHeight: "Height (px)",
+                performExport: "Export",
+                // Help Content
+                helpDragDropImage: "Drag & drop image files onto the graph to add tiles.",
+                helpMoveTile: "Drag tiles to move them.",
+                helpEditText: "Double-click text to edit it.",
+                helpAddText: "Double-click an empty area on the graph to add text.",
+                helpEditAxis: "Double-click an axis to edit its settings.",
+                helpBasicOps: "Basic Operations", helpTileOps: "Tile Operations", helpAxisOps: "Axis Operations",
+                // Modals & Alerts
+                confirmOverlapChangeTitle: "Confirm Setting Change",
+                confirmOverlapChangeMsg: "You cannot change from 'Overlap' back to 'Do not overlap'. Do you want to proceed?",
+                errorTileOutOfBounds: "Tile would be pushed out of bounds. Please expand the axis if more space is needed.",
+                confirmLoad: "The current project will be discarded. Load a new project?",
+                yes: "Yes", no: "No",
+            }
+        };
+
+        let currentLang = 'ja';
+        let app; // Make app a global variable accessible by switchLanguage
+
+        function T(key) {
+            return L10N[currentLang][key] || key;
+        }
+
+        function switchLanguage() {
+            currentLang = (currentLang === 'ja') ? 'en' : 'ja';
+            const langBtn = document.getElementById('lang-btn');
+            langBtn.textContent = (currentLang === 'ja') ? 'English' : '日本語';
+
+            document.querySelectorAll('[data-lang-key]').forEach(el => {
+                const key = el.dataset.langKey;
+                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                    if(el.placeholder) el.placeholder = T(key);
+                } else {
+                    el.textContent = T(key);
+                }
+            });
+            if (app && app.uiManager) {
+                app.uiManager.render();
+            }
+        }
+
+        // ==================================================================
+        // --- 3. 状態管理 (State Manager & Undo/Redo) ---
+        // ==================================================================
+        class StateManager {
+            constructor(app) {
+                this.app = app;
+                this.undoStack = [];
+                this.redoStack = [];
+                this.maxHistory = 50;
+            }
+
+            createSnapshot() {
+                const state = {
+                    globalSettings: { ...this.app.globalSettings },
+                    graphSettings: { ...this.app.graphSettings },
+                    axisSettings: JSON.parse(JSON.stringify(this.app.axisSettings)),
+                    xRange: { ...this.app.xRange },
+                    yRange: { ...this.app.yRange },
+                    tiles: this.app.tileManager.tiles.map(t => t.getState()),
+                };
+                return JSON.stringify(state);
+            }
+
+            restoreFromSnapshot(snapshot) {
+                const state = JSON.parse(snapshot);
+                
+                Object.assign(this.app.globalSettings, state.globalSettings);
+                Object.assign(this.app.graphSettings, state.graphSettings);
+                Object.assign(this.app.axisSettings, state.axisSettings);
+                Object.assign(this.app.xRange, state.xRange);
+                Object.assign(this.app.yRange, state.yRange);
+
+                this.app.tileManager.tiles = state.tiles.map(tileState => {
+                    const TileClass = tileState.type === 'tile' ? ImageTile : TextTile;
+                    const tile = new TileClass(this.app, tileState.id, tileState.x, tileState.y, tileState.imgSrc);
+                    tile.setState(tileState);
+                    return tile;
+                });
+                
+                if (this.app.graphSettings.backgroundImage.src) {
+                    this.app.loadBackgroundImage(this.app.graphSettings.backgroundImage.src);
+                }
+
+                this.app.uiManager.render();
+                this.app.canvasManager.draw();
+            }
+
+            recordState() {
+                this.redoStack = [];
+                const snapshot = this.createSnapshot();
+                if (this.undoStack.length > 0 && this.undoStack[this.undoStack.length - 1] === snapshot) return;
+                this.undoStack.push(snapshot);
+                if (this.undoStack.length > this.maxHistory) this.undoStack.shift();
+            }
+
+            undo() {
+                if (this.undoStack.length <= 1) return;
+                this.redoStack.push(this.undoStack.pop());
+                this.restoreFromSnapshot(this.undoStack[this.undoStack.length - 1]);
+            }
+
+            redo() {
+                if (this.redoStack.length === 0) return;
+                const nextState = this.redoStack.pop();
+                this.undoStack.push(nextState);
+                this.restoreFromSnapshot(nextState);
+            }
+        }
+
+        // ==================================================================
+        // --- 4. UI管理 (UI Manager) ---
+        // ==================================================================
+        class UIManager {
+            constructor(app) {
+                this.app = app;
+                this.panel = document.getElementById('ui-panel');
+                this.viewStack = [];
+            }
+            
+            pushView(view, data = null) {
+                this.viewStack.push({ view, data });
+                this.render();
+            }
+
+            popView() {
+                if (this.viewStack.length > 1) {
+                    this.viewStack.pop();
+                    this.render();
+                }
+            }
+            
+            render() {
+                const current = this.viewStack[this.viewStack.length - 1];
+                if (!current) return;
+                
+                const { view, data } = current;
+                this.panel.innerHTML = '';
+
+                // Update header button active states
+                document.getElementById('export-btn').classList.toggle('active-purple', view === 'export');
+                document.getElementById('help-btn').classList.toggle('active-green', view === 'help');
+
+                if (this.viewStack.length > 1) {
+                    const header = document.createElement('div');
+                    header.className = 'back-btn-container';
+                    const backBtn = document.createElement('button');
+                    backBtn.className = 'back-btn';
+                    backBtn.dataset.langKey = 'back';
+                    backBtn.onclick = () => this.popView();
+                    header.appendChild(backBtn);
+                    this.panel.appendChild(header);
+                }
+
+                if (view === 'main') this.renderMainView();
+                else if (view === 'axis') this.renderAxisSettings(data);
+                else if (view === 'tile') this.renderTileSettings(data);
+                else if (view === 'text') this.renderTextSettings(data);
+                else if (view === 'help') this.renderHelp();
+                else if (view === 'export') this.renderExportSettings();
+                
+                 this.panel.querySelectorAll('[data-lang-key]').forEach(el => {
+                    const key = el.dataset.langKey;
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                        if(el.placeholder) el.placeholder = T(key);
+                    } else if (el.textContent === '' || el.textContent === key) {
+                        el.textContent = T(key);
+                    }
+                });
+            }
+            
+            renderMainView() {
+                this.renderGraphAreaSettings();
+                this.renderGlobalTileSettings();
+            }
+
+            renderGlobalTileSettings() {
+                const section = this.createSection('globalTileSettings', true);
+                this.createSelect(section.content, 'tileShape', this.app.globalSettings.shape, e => {
+                    this.app.globalSettings.shape = e.target.value;
+                    this.app.stateManager.recordState();
+                    this.app.canvasManager.draw();
+                }, { 'circle': T('shapeCircle'), 'rounded-square': T('shapeRoundedSquare'), 'pentagon': T('shapePentagon'), 'hexagon': T('shapeHexagon') });
+                this.createRange(section.content, 'tileSize', this.app.globalSettings.size, e => { 
+                    this.app.globalSettings.size = parseInt(e.target.value);
+                    this.app.tileManager.tiles.forEach(tile => {
+                        if (tile instanceof ImageTile) tile.rescaleToFit();
+                    });
+                    this.app.canvasManager.draw();
+                }, { min: 20, max: 400 });
+                this.createRange(section.content, 'borderWidth', this.app.globalSettings.borderWidth, e => { this.app.globalSettings.borderWidth = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 0, max: 30 });
+                this.createColorInput(section.content, 'borderColor', this.app.globalSettings.borderColor, color => { this.app.globalSettings.borderColor = color; this.app.canvasManager.draw(); });
+                
+                const overlapGroup = this.createGroup(section.content, 'tileOverlap');
+                const select = document.createElement('select');
+                select.innerHTML = `<option value="false">${T('overlapForbid')}</option><option value="true">${T('overlapAllow')}</option>`;
+                select.value = this.app.globalSettings.allowOverlap;
+                select.onchange = (e) => {
+                    const allow = e.target.value === 'true';
+                    if (this.app.globalSettings.allowOverlap && !allow) { select.value = 'true'; return; }
+                    if (!this.app.globalSettings.allowOverlap && allow) {
+                        this.app.showModal(T('confirmOverlapChangeTitle'), T('confirmOverlapChangeMsg'), (c) => { if (c) { this.app.globalSettings.allowOverlap = true; this.app.stateManager.recordState(); } else { select.value = 'false'; }});
+                    }
+                };
+                overlapGroup.appendChild(select);
+                this.panel.appendChild(section.container);
+            }
+
+            renderGraphAreaSettings() {
+                const section = this.createSection('graphAreaSettings', true);
+                
+                // View Mode
+                const viewModeGroup = this.createGroup(section.content, 'viewMode');
+                viewModeGroup.querySelector('label').style.fontSize = '1.1em';
+                const viewModeSelect = document.createElement('select');
+                viewModeSelect.innerHTML = `<option value="full">${T('viewModeFull')}</option><option value="quadrant1">${T('viewModeQuadrant1')}</option>`;
+                viewModeSelect.value = this.app.graphSettings.viewMode;
+                viewModeSelect.onchange = (e) => { this.app.graphSettings.viewMode = e.target.value; this.app.stateManager.recordState(); this.app.canvasManager.draw(); };
+                viewModeGroup.appendChild(viewModeSelect);
+
+                this.createColorInput(section.content, 'backgroundColor', this.app.graphSettings.bgColor, color => { this.app.graphSettings.bgColor = color; this.app.canvasManager.draw(); });
+                
+                // Background Image Section
+                this.createGroup(section.content, 'backgroundImage');
+                const dropZone = document.createElement('div');
+                dropZone.id = 'bg-drop-zone';
+                dropZone.dataset.langKey = 'bgImageDrop';
+                dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+                dropZone.addEventListener('dragleave', e => { dropZone.classList.remove('dragover'); });
+                dropZone.addEventListener('drop', e => {
+                    e.preventDefault();
+                    dropZone.classList.remove('dragover');
+                    const file = e.dataTransfer.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            this.app.loadBackgroundImage(event.target.result);
+                            this.app.graphSettings.backgroundImage.src = event.target.result;
+                            this.app.stateManager.recordState();
+                            this.render();
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+                section.content.appendChild(dropZone);
+
+                if (this.app.graphSettings.backgroundImage.src) {
+                    const bgSettings = this.app.graphSettings.backgroundImage;
+                    this.createRange(section.content, 'bgImageOpacity', bgSettings.opacity * 100, e => { bgSettings.opacity = parseFloat(e.target.value) / 100; this.app.canvasManager.draw(); }, { min: 0, max: 100 });
+                    this.createRange(section.content, 'bgImageScale', bgSettings.scale * 100, e => { bgSettings.scale = parseFloat(e.target.value) / 100; this.app.canvasManager.draw(); }, { min: 10, max: 200 });
+                    this.createRange(section.content, 'bgImageOffsetX', bgSettings.offsetX, e => { bgSettings.offsetX = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: -400, max: 400 });
+                    this.createRange(section.content, 'bgImageOffsetY', bgSettings.offsetY, e => { bgSettings.offsetY = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: -400, max: 400 });
+                }
+
+                // Grid Section
+                this.createSelect(section.content, 'gridStyle', this.app.graphSettings.grid.style, e => { this.app.graphSettings.grid.style = e.target.value; this.app.stateManager.recordState(); this.app.canvasManager.draw(); }, { 'solid': T('styleSolid'), 'dashed': T('styleDashed'), 'none': T('styleNone') });
+                this.createRange(section.content, 'gridInterval', this.app.graphSettings.grid.interval, e => { this.app.graphSettings.grid.interval = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 5, max: 200, step: 5 });
+                this.createRange(section.content, 'gridWidth', this.app.graphSettings.grid.width, e => { this.app.graphSettings.grid.width = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 1, max: 10 });
+                this.createColorInput(section.content, 'gridColor', this.app.graphSettings.grid.color, color => { this.app.graphSettings.grid.color = color; this.app.canvasManager.draw(); });
+                this.panel.appendChild(section.container);
+            }
+
+            renderAxisSettings(axisKey) {
+                const axis = this.app.axisSettings[axisKey];
+                const section = this.createSection('axisSettings', false, T('axis_' + axisKey));
+                this.createInput(section.content, 'axisLabel', axis.label, e => { axis.label = e.target.value; this.app.canvasManager.draw(); });
+                this.createRange(section.content, 'axisLabelSize', axis.labelSize, e => { axis.labelSize = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 8, max: 48 });
+                this.createSelect(section.content, 'axisLabelFont', axis.fontFamily, e => { axis.fontFamily = e.target.value; this.app.stateManager.recordState(); this.app.canvasManager.draw(); }, {
+                    '"Noto Sans JP", sans-serif': 'Noto Sans JP',
+                    'serif': 'Serif',
+                    'sans-serif': 'Sans-Serif',
+                    'monospace': 'Monospace'
+                });
+                const styleGroup = this.createGroup(section.content, 'axisLabelStyle');
+                const btnContainer = document.createElement('div'); btnContainer.className = 'font-style-buttons';
+                const boldBtn = document.createElement('button'); boldBtn.dataset.langKey = 'bold'; boldBtn.className = axis.isBold ? 'active' : '';
+                boldBtn.onclick = () => { axis.isBold = !axis.isBold; this.render(); this.app.stateManager.recordState(); this.app.canvasManager.draw(); };
+                const italicBtn = document.createElement('button'); italicBtn.dataset.langKey = 'italic'; italicBtn.className = axis.isItalic ? 'active' : '';
+                italicBtn.onclick = () => { axis.isItalic = !axis.isItalic; this.render(); this.app.stateManager.recordState(); this.app.canvasManager.draw(); };
+                btnContainer.append(boldBtn, italicBtn); styleGroup.appendChild(btnContainer);
+                
+                const shadowGroup = this.createGroup(section.content, 'axisLabelShadow');
+                const checkWrapper = document.createElement('div'); checkWrapper.className = 'checkbox-wrapper';
+                const shadowCheck = document.createElement('input'); shadowCheck.type = 'checkbox'; shadowCheck.checked = axis.hasShadow;
+                shadowCheck.id = 'shadow-check';
+                shadowCheck.onchange = (e) => { axis.hasShadow = e.target.checked; this.app.stateManager.recordState(); this.app.canvasManager.draw(); };
+                const shadowLabel = document.createElement('label'); shadowLabel.htmlFor = 'shadow-check'; shadowLabel.textContent = '有効';
+                checkWrapper.append(shadowCheck, shadowLabel);
+                shadowGroup.appendChild(checkWrapper);
+
+                this.createColorInput(section.content, 'axisColor', axis.color, color => { axis.color = color; this.app.canvasManager.draw(); });
+                this.createRange(section.content, 'axisWidth', axis.width, e => { axis.width = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 1, max: 10 });
+                
+                const resetBtn = this.createButton(section.content, 'resetToDefaults', () => { this.app.resetAxisToDefault(axisKey); this.render(); });
+                resetBtn.classList.add('orange');
+                
+                this.panel.appendChild(section.container);
+            }
+            
+            renderTileSettings(tile) {
+                const section = this.createSection('selectedTileSettings');
+                this.createRange(section.content, 'imageScale', tile.relativeScale * 100, e => { tile.relativeScale = parseFloat(e.target.value) / 100; this.app.canvasManager.draw(); }, { min: 50, max: 150, step: 1 });
+                this.createRange(section.content, 'imageOffsetX', tile.offsetX, e => { tile.offsetX = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: -100, max: 100 });
+                this.createRange(section.content, 'imageOffsetY', tile.offsetY, e => { tile.offsetY = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: -100, max: 100 });
+                this.createColorInput(section.content, 'tileBackgroundColor', tile.bgColor, color => { tile.bgColor = color; this.app.canvasManager.draw(); });
+                this.createRange(section.content, 'tileBackgroundOpacity', tile.bgOpacity * 100, e => { tile.bgOpacity = parseFloat(e.target.value) / 100; this.app.canvasManager.draw(); }, { min: 0, max: 100 });
+                this.panel.appendChild(section.container);
+            }
+
+            renderTextSettings(textTile) {
+                const section = this.createSection('selectedTextSettings');
+                const group = this.createGroup(section.content, 'textContent');
+                const textarea = document.createElement('textarea');
+                textarea.rows = 3; textarea.style.width = '100%'; textarea.style.backgroundColor = 'var(--input-bg)';
+                textarea.style.border = '1px solid var(--border-color)'; textarea.style.color = 'var(--text-color)';
+                textarea.style.borderRadius = '4px'; textarea.value = textTile.text;
+                textarea.oninput = (e) => { textTile.text = e.target.value; this.app.canvasManager.draw(); };
+                textarea.onchange = () => this.app.stateManager.recordState();
+                group.appendChild(textarea);
+                this.createRange(section.content, 'fontSize', textTile.fontSize, e => { textTile.fontSize = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 8, max: 150 });
+                const styleGroup = this.createGroup(section.content, 'fontStyle');
+                const btnContainer = document.createElement('div'); btnContainer.className = 'font-style-buttons';
+                const boldBtn = document.createElement('button'); boldBtn.dataset.langKey = 'bold'; boldBtn.className = textTile.isBold ? 'active' : '';
+                boldBtn.onclick = () => { textTile.isBold = !textTile.isBold; boldBtn.classList.toggle('active'); this.app.stateManager.recordState(); this.app.canvasManager.draw(); };
+                const italicBtn = document.createElement('button'); italicBtn.dataset.langKey = 'italic'; italicBtn.className = textTile.isItalic ? 'active' : '';
+                italicBtn.onclick = () => { textTile.isItalic = !textTile.isItalic; italicBtn.classList.toggle('active'); this.app.stateManager.recordState(); this.app.canvasManager.draw(); };
+                btnContainer.append(boldBtn, italicBtn); styleGroup.appendChild(btnContainer);
+                this.createColorInput(section.content, 'fontColor', textTile.color, color => { textTile.color = color; this.app.canvasManager.draw(); });
+                this.createSelect(section.content, 'textAlign', textTile.textAlign, e => { textTile.textAlign = e.target.value; this.app.canvasManager.draw(); }, { 'left': T('alignLeft'), 'center': T('alignCenter'), 'right': T('alignRight') });
+                this.createColorInput(section.content, 'tileBackgroundColor', textTile.bgColor, color => { textTile.bgColor = color; this.app.canvasManager.draw(); });
+                this.createRange(section.content, 'tileBackgroundOpacity', textTile.bgOpacity * 100, e => { textTile.bgOpacity = parseFloat(e.target.value) / 100; this.app.canvasManager.draw(); }, { min: 0, max: 100 });
+                const deleteBtn = this.createButton(section.content, 'deleteText', () => { this.app.tileManager.removeTile(textTile.id); this.popView(); this.app.stateManager.recordState(); this.app.canvasManager.draw(); });
+                deleteBtn.style.backgroundColor = 'var(--red)'; deleteBtn.style.color = 'white';
+                this.panel.appendChild(section.container);
+            }
+
+            renderHelp() {
+                const section = this.createSection('helpTitle');
+                section.content.classList.add('help-content');
+                section.content.innerHTML += `<h4 data-lang-key="helpBasicOps"></h4><ul><li data-lang-key="helpDragDropImage"></li><li data-lang-key="helpAddText"></li></ul><h4 data-lang-key="helpTileOps"></h4><ul><li data-lang-key="helpMoveTile"></li><li>タイルをダブルクリックして画像や拡大率を編集します。</li><li data-lang-key="helpEditText"></li></ul><h4 data-lang-key="helpAxisOps"></h4><ul><li data-lang-key="helpEditAxis"></li></ul>`;
+                this.panel.appendChild(section.container);
+            }
+            
+            renderExportSettings() {
+                const section = this.createSection('exportSettings');
+                this.createSelect(section.content, 'exportFormat', 'png', () => {}, { 'png': 'PNG', 'jpeg': 'JPEG' });
+                this.createButton(section.content, 'performExport', () => this.app.exportImage());
+                this.panel.appendChild(section.container);
+            }
+
+            createSection(titleKey, isAccordion = false, titleText = '') {
+                const container = document.createElement('div'); container.className = 'ui-section';
+                const title = document.createElement('h3'); title.dataset.langKey = titleKey; title.textContent = titleText || T(titleKey);
+                const content = document.createElement('div');
+                container.appendChild(title);
+                container.appendChild(content);
+
+                if (isAccordion) {
+                    title.classList.add('accordion-header');
+                    content.classList.add('accordion-content');
+                    title.onclick = () => {
+                        title.classList.toggle('closed');
+                        content.classList.toggle('closed');
+                    };
+                }
+                return { container, content };
+            }
+            createGroup(parent, labelKey) {
+                const group = document.createElement('div'); group.className = 'form-group';
+                const label = document.createElement('label'); label.dataset.langKey = labelKey;
+                group.appendChild(label); parent.appendChild(group); return group;
+            }
+            createInput(parent, labelKey, value, oninput) {
+                const group = this.createGroup(parent, labelKey);
+                const input = document.createElement('input'); input.type = 'text'; input.value = value;
+                input.oninput = oninput; input.onchange = () => this.app.stateManager.recordState();
+                group.appendChild(input);
+            }
+            createRange(parent, labelKey, value, oninput, { min, max, step = 1 }) {
+                const group = this.createGroup(parent, labelKey);
+                const container = document.createElement('div'); container.style.display = 'flex'; container.style.alignItems = 'center'; container.style.gap = '8px';
+                const range = document.createElement('input'); range.type = 'range'; range.min = min; range.max = max; range.step = step; range.value = value; range.style.flexGrow = '1';
+                const number = document.createElement('input'); number.type = 'number'; number.min = min; number.max = max; number.step = step; number.value = value; number.style.width = '60px';
+                range.oninput = (e) => { number.value = e.target.value; oninput(e); };
+                range.onchange = () => this.app.stateManager.recordState();
+                number.oninput = (e) => { range.value = e.target.value; oninput(e); };
+                number.onchange = () => this.app.stateManager.recordState();
+                container.append(range, number); group.appendChild(container);
+            }
+            createColorInput(parent, labelKey, value, oninput) {
+                const group = this.createGroup(parent, labelKey);
+                const wrapper = document.createElement('div'); wrapper.className = 'color-input-wrapper';
+                const colorInput = document.createElement('input'); colorInput.type = 'color'; colorInput.value = value;
+                colorInput.oninput = (e) => { const color = e.target.value; oninput(color); };
+                colorInput.onchange = () => this.app.stateManager.recordState();
+                wrapper.append(colorInput); group.appendChild(wrapper);
+            }
+            createSelect(parent, labelKey, value, onchange, options) {
+                const group = this.createGroup(parent, labelKey);
+                const select = document.createElement('select');
+                for (const [val, text] of Object.entries(options)) {
+                    const option = document.createElement('option'); option.value = val; option.textContent = text; select.appendChild(option);
+                }
+                select.value = value; select.onchange = onchange; group.appendChild(select);
+            }
+            createButton(parent, labelKey, onclick) {
+                const button = document.createElement('button'); button.dataset.langKey = labelKey; button.onclick = onclick; button.style.width = '100%'; button.style.marginTop = '8px';
+                parent.appendChild(button); return button;
+            }
+        }
+        
+        // ==================================================================
+        // --- 5. キャンバス管理 (Canvas Manager) ---
+        // ==================================================================
+        class CanvasManager {
+            constructor(app) {
+                this.app = app;
+                this.canvas = document.getElementById('main-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.canvas.width = INITIAL_CANVAS_WIDTH;
+                this.canvas.height = INITIAL_CANVAS_HEIGHT;
+                this.colorCache = {};
+            }
+            
+            resolveColor(colorStr) {
+                if (!colorStr) return '#000000';
+                if (this.colorCache[colorStr]) return this.colorCache[colorStr];
+                if (colorStr.startsWith('var(')) {
+                    const varName = colorStr.match(/--[\w-]+/)[0];
+                    const resolvedColor = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+                    this.colorCache[colorStr] = resolvedColor;
+                    return resolvedColor;
+                }
+                return colorStr;
+            }
+
+            getScale() {
+                const xRange = this.app.xRange.max - this.app.xRange.min;
+                const yRange = this.app.yRange.max - this.app.yRange.min;
+                if (xRange === 0 || yRange === 0) return 1;
+                const scaleX = this.canvas.width / xRange;
+                const scaleY = this.canvas.height / yRange;
+                return Math.min(scaleX, scaleY);
+            }
+
+            draw(isExporting = false) {
+                this.ctx.fillStyle = this.resolveColor(this.app.graphSettings.bgColor);
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                const bg = this.app.graphSettings.backgroundImage;
+                if (bg.src && this.app.bgImage.complete && this.app.bgImage.naturalWidth > 0) {
+                    this.ctx.globalAlpha = bg.opacity;
+                    const w = this.app.bgImage.width * bg.scale;
+                    const h = this.app.bgImage.height * bg.scale;
+                    const x = (this.canvas.width - w) / 2 + bg.offsetX;
+                    const y = (this.canvas.height - h) / 2 + bg.offsetY;
+                    this.ctx.drawImage(this.app.bgImage, x, y, w, h);
+                    this.ctx.globalAlpha = 1.0;
+                }
+
+                if (this.app.graphSettings.grid.style !== 'none') this.drawGrid();
+                this.drawAxes();
+                this.app.tileManager.tiles.forEach(tile => tile.draw(this.ctx, isExporting));
+                const currentView = this.app.uiManager.viewStack[this.app.uiManager.viewStack.length - 1];
+                if (!isExporting && currentView && currentView.data && currentView.data.drawHighlight) {
+                    currentView.data.drawHighlight(this.ctx);
+                }
+            }
+
+            drawGrid() {
+                const { grid } = this.app.graphSettings;
+                this.ctx.strokeStyle = this.resolveColor(grid.color);
+                this.ctx.lineWidth = grid.width;
+                
+                if (grid.style === 'dashed') {
+                    this.ctx.setLineDash([5, 5]);
+                }
+
+                const step = grid.interval === 0 ? 50 : grid.interval;
+                for (let val = 0; val <= this.app.xRange.max; val += step) { this.drawVLine(val); }
+                for (let val = -step; val >= this.app.xRange.min; val -= step) { this.drawVLine(val); }
+                for (let val = 0; val <= this.app.yRange.max; val += step) { this.drawHLine(val); }
+                for (let val = -step; val >= this.app.yRange.min; val -= step) { this.drawHLine(val); }
+
+                this.ctx.setLineDash([]); // Reset for other drawings
+            }
+            
+            drawVLine(val) {
+                const { x } = this.logicalToCanvas(val, 0);
+                this.ctx.beginPath(); this.ctx.moveTo(x, 0); this.ctx.lineTo(x, this.canvas.height); this.ctx.stroke();
+            }
+            drawHLine(val) {
+                const { y } = this.logicalToCanvas(0, val);
+                this.ctx.beginPath(); this.ctx.moveTo(0, y); this.ctx.lineTo(this.canvas.width, y); this.ctx.stroke();
+            }
+
+            drawAxes() {
+                const origin = this.logicalToCanvas(0, 0);
+                if (this.app.graphSettings.viewMode === 'full') {
+                    this.drawAxisPart('x_neg', origin);
+                    this.drawAxisPart('y_neg', origin);
+                }
+                this.drawAxisPart('x_pos', origin);
+                this.drawAxisPart('y_pos', origin);
+
+                this.ctx.fillStyle = '#000000';
+                this.ctx.beginPath();
+                this.ctx.arc(origin.x, origin.y, 5, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+            
+            drawAxisPart(key, origin) {
+                const settings = this.app.axisSettings[key];
+                const color = this.resolveColor(settings.color);
+                this.ctx.strokeStyle = color;
+                this.ctx.fillStyle = color;
+                this.ctx.lineWidth = settings.width;
+                const style = `${settings.isItalic ? 'italic ' : ''}${settings.isBold ? 'bold ' : ''}`;
+                this.ctx.font = `${style}${settings.labelSize}px ${settings.fontFamily}`;
+                
+                let start = { ...origin };
+                let end, arrowDir, textAlign, textBaseline;
+                
+                if (key === 'x_neg') {
+                    end = {x: 0, y: origin.y};
+                    arrowDir = {x: -1, y: 0}; 
+                    textAlign = 'left'; textBaseline = 'bottom';
+                } else if (key === 'x_pos') {
+                    end = {x: this.canvas.width, y: origin.y};
+                    arrowDir = {x: 1, y: 0}; 
+                    textAlign = 'right'; textBaseline = 'bottom';
+                } else if (key === 'y_pos') { // Y positive is UP
+                    end = {x: origin.x, y: 0};
+                    arrowDir = {x: 0, y: -1}; 
+                    textAlign = 'left'; textBaseline = 'top';
+                } else { // y_neg, Y negative is DOWN
+                    end = {x: origin.x, y: this.canvas.height};
+                    arrowDir = {x: 0, y: 1}; 
+                    textAlign = 'left'; textBaseline = 'bottom';
+                }
+                
+                if (this.app.graphSettings.viewMode === 'quadrant1') {
+                    if (key === 'x_pos') {
+                        start.y -= 5;
+                        end.y -= 5;
+                    } else if (key === 'y_pos') {
+                        start.x += 5;
+                        end.x += 5;
+                    }
+                }
+
+                const arrowPos = { ...end };
+                const textPos = { ...end };
+
+                if (key === 'x_neg') {
+                    textPos.x += 10;
+                    textPos.y -= 10;
+                } else if (key === 'x_pos') {
+                    textPos.x -= 10;
+                    textPos.y -= 10;
+                } else if (key === 'y_pos') {
+                    textPos.x += 10;
+                    textPos.y += 10;
+                } else { // y_neg
+                    textPos.x += 10;
+                    textPos.y -= 10;
+                }
+                
+                const arrowSize = 10 + settings.width * 1.5;
+                const lineEnd = {
+                    x: arrowPos.x - arrowDir.x * arrowSize * 0.8,
+                    y: arrowPos.y - arrowDir.y * arrowSize * 0.8
+                };
+
+                this.ctx.beginPath(); this.ctx.moveTo(start.x, start.y); this.ctx.lineTo(lineEnd.x, lineEnd.y); this.ctx.stroke();
+                this.drawArrow(this.ctx, arrowPos.x, arrowPos.y, arrowDir.x, arrowDir.y, settings.width);
+                
+                if (settings.hasShadow) {
+                    this.ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                    this.ctx.shadowBlur = 3;
+                    this.ctx.shadowOffsetX = 1;
+                    this.ctx.shadowOffsetY = 1;
+                }
+                this.ctx.textAlign = textAlign;
+                this.ctx.textBaseline = textBaseline;
+                this.ctx.fillText(settings.label, textPos.x, textPos.y);
+
+                this.ctx.shadowColor = 'transparent';
+                this.ctx.shadowBlur = 0;
+                this.ctx.shadowOffsetX = 0;
+                this.ctx.shadowOffsetY = 0;
+            }
+
+            drawArrow(ctx, x, y, dx, dy, width) {
+                const size = 10 + width * 1.5;
+                ctx.beginPath(); ctx.moveTo(x, y);
+                ctx.lineTo(x - dx * size + dy * size / 2, y - dy * size - dx * size / 2);
+                ctx.lineTo(x - dx * size - dy * size / 2, y - dy * size + dx * size / 2);
+                ctx.closePath(); ctx.fill();
+            }
+            
+            logicalToCanvas(lx, ly) {
+                if (this.app.graphSettings.viewMode === 'quadrant1') {
+                    const scaleX = this.canvas.width / this.app.xRange.max;
+                    const scaleY = this.canvas.height / this.app.yRange.max;
+                    const scale = Math.min(scaleX, scaleY);
+                    const cx = lx * scale;
+                    const cy = this.canvas.height - (ly * scale);
+                    return { x: cx, y: cy };
+                } else {
+                    const scale = this.getScale();
+                    const cx = (this.canvas.width / 2) + lx * scale;
+                    const cy = (this.canvas.height / 2) - ly * scale;
+                    return { x: cx, y: cy };
+                }
+            }
+
+            canvasToLogical(cx, cy) {
+                if (this.app.graphSettings.viewMode === 'quadrant1') {
+                    const scaleX = this.canvas.width / this.app.xRange.max;
+                    const scaleY = this.canvas.height / this.app.yRange.max;
+                    const scale = Math.min(scaleX, scaleY);
+                    if (scale === 0) return { x: 0, y: 0 };
+                    const lx = cx / scale;
+                    const ly = (this.canvas.height - cy) / scale;
+                    return { x: lx, y: ly };
+                } else {
+                    const scale = this.getScale();
+                    if (scale === 0) return { x: 0, y: 0 };
+                    const lx = (cx - (this.canvas.width / 2)) / scale;
+                    const ly = ((this.canvas.height / 2) - cy) / scale;
+                    return { x: lx, y: ly };
+                }
+            }
+        }
+        
+        // ==================================================================
+        // --- 6. タイル管理 (Tile Manager & Tile Classes) ---
+        // ==================================================================
+        class TileManager {
+            constructor(app) { this.app = app; this.tiles = []; }
+            addTile(tile) { this.tiles.push(tile); }
+            removeTile(id) { this.tiles = this.tiles.filter(tile => tile.id !== id); }
+            getTileAt(x, y) {
+                for (let i = this.tiles.length - 1; i >= 0; i--) {
+                    if (this.tiles[i].isPointInside(x, y)) return this.tiles[i];
+                }
+                return null;
+            }
+            resolveCollisions(movedTile) {
+                if (this.app.globalSettings.allowOverlap) return;
+                for (let i = 0; i < 10; i++) { // Iterate a few times to settle
+                    let wasCollision = false;
+                    for (const otherTile of this.tiles) {
+                        if (movedTile === otherTile) continue;
+                        const dx = movedTile.x - otherTile.x;
+                        const dy = movedTile.y - otherTile.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        const min_dist = (movedTile.size / 2) + (otherTile.size / 2);
+                        if (dist < min_dist && dist > 0) {
+                            wasCollision = true;
+                            const overlap = min_dist - dist;
+                            const pushX = (dx / dist) * overlap;
+                            const pushY = (dy / dist) * overlap;
+                            movedTile.x += pushX / 2;
+                            movedTile.y += pushY / 2;
+                            otherTile.x -= pushX / 2;
+                            otherTile.y -= pushY / 2;
+                        }
+                    }
+                    if (!wasCollision) break;
+                }
+            }
+        }
+
+        class BaseTile {
+            constructor(app, id, x, y, type) {
+                this.app = app; this.id = id || `tile_${Date.now()}_${Math.random()}`;
+                this.x = x; this.y = y; this.type = type;
+                this.bgColor = '#FFFFFF'; this.bgOpacity = 1.0;
+            }
+            get size() { return this.app.globalSettings.size; }
+            isPointInside(px, py) {
+                const dx = this.x - px, dy = this.y - py;
+                return Math.sqrt(dx * dx + dy * dy) < this.size / 2;
+            }
+            getDeleteButtonRect() {
+                const r = this.size / 2, angle = -Math.PI / 4, btnR = DELETE_BUTTON_SIZE / 2;
+                const cx = this.x + r * Math.cos(angle), cy = this.y + r * Math.sin(angle);
+                return { x: cx - btnR, y: cy - btnR, width: DELETE_BUTTON_SIZE, height: DELETE_BUTTON_SIZE };
+            }
+            isPointOnDeleteButton(px, py) {
+                const rect = this.getDeleteButtonRect();
+                return px >= rect.x && px <= rect.x + rect.width && py >= rect.y && py <= rect.y + rect.height;
+            }
+            drawHighlight(ctx) {
+                ctx.strokeStyle = 'rgba(74, 144, 226, 0.9)'; ctx.lineWidth = 4;
+                ctx.beginPath(); this._drawShapePath(ctx, this.size / 2 + 5); ctx.closePath(); ctx.stroke();
+            }
+            drawDeleteButton(ctx) {
+                const rect = this.getDeleteButtonRect();
+                ctx.fillStyle = 'rgba(233, 75, 60, 0.8)';
+                ctx.beginPath(); ctx.arc(rect.x + rect.width/2, rect.y + rect.height/2, rect.width/2, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(rect.x + 7, rect.y + 7); ctx.lineTo(rect.x + rect.width - 7, rect.y + rect.height - 7);
+                ctx.moveTo(rect.x + rect.width - 7, rect.y + 7); ctx.lineTo(rect.x + 7, rect.y + rect.height - 7);
+                ctx.stroke();
+            }
+            _drawShapePath(ctx, r) {
+                const shape = this.app.globalSettings.shape;
+                switch (shape) {
+                    case 'rounded-square':
+                        const cornerRadius = r * 0.2;
+                        ctx.moveTo(this.x - r + cornerRadius, this.y - r);
+                        ctx.arcTo(this.x + r, this.y - r, this.x + r, this.y + r, cornerRadius);
+                        ctx.arcTo(this.x + r, this.y + r, this.x - r, this.y + r, cornerRadius);
+                        ctx.arcTo(this.x - r, this.y + r, this.x - r, this.y - r, cornerRadius);
+                        ctx.arcTo(this.x - r, this.y - r, this.x + r, this.y - r, cornerRadius);
+                        break;
+                    case 'pentagon':
+                        for (let i = 0; i < 5; i++) {
+                            ctx.lineTo(this.x + r * Math.cos(-Math.PI / 2 + i * 2 * Math.PI / 5), this.y + r * Math.sin(-Math.PI / 2 + i * 2 * Math.PI / 5));
+                        }
+                        break;
+                    case 'hexagon':
+                         for (let i = 0; i < 6; i++) {
+                            ctx.lineTo(this.x + r * Math.cos(i * Math.PI / 3), this.y + r * Math.sin(i * Math.PI / 3));
+                        }
+                        break;
+                    case 'circle':
+                    default:
+                        ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
+                        break;
+                }
+            }
+        }
+
+        class ImageTile extends BaseTile {
+            constructor(app, id, x, y, imgSrc) {
+                super(app, id, x, y, 'tile');
+                this.imgSrc = imgSrc; this.img = null; 
+                this.baseScale = 1.0; this.relativeScale = 1.0;
+                this.isNew = true;
+                this.offsetX = 0; this.offsetY = 0;
+                this.loadImage();
+            }
+            rescaleToFit() {
+                if (!this.img || !this.img.complete || this.img.width === 0) return;
+                if (this.img.width > this.img.height) this.baseScale = this.size / this.img.width;
+                else this.baseScale = this.size / this.img.height;
+            }
+            loadImage() {
+                return new Promise((resolve) => {
+                    this.img = new Image();
+                    this.img.onload = () => {
+                        if (this.isNew) {
+                            this.rescaleToFit();
+                            this.isNew = false;
+                        }
+                        resolve();
+                    };
+                    this.img.src = this.imgSrc;
+                });
+            }
+            draw(ctx, isExporting = false) {
+                const s = this.app.globalSettings, r = this.size / 2;
+                ctx.save();
+                ctx.beginPath(); this._drawShapePath(ctx, r); ctx.closePath();
+                ctx.globalAlpha = this.bgOpacity;
+                ctx.fillStyle = this.app.canvasManager.resolveColor(this.bgColor);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+                if (this.img && this.img.complete) {
+                    ctx.clip();
+                    const finalScale = this.baseScale * this.relativeScale;
+                    const w = this.img.width * finalScale, h = this.img.height * finalScale;
+                    ctx.drawImage(this.img, this.x - w / 2 + this.offsetX, this.y - h / 2 + this.offsetY, w, h);
+                }
+                ctx.restore();
+                if (s.borderWidth > 0) {
+                    ctx.strokeStyle = this.app.canvasManager.resolveColor(s.borderColor);
+                    ctx.lineWidth = s.borderWidth;
+                    ctx.beginPath(); this._drawShapePath(ctx, r - s.borderWidth / 2); ctx.closePath(); ctx.stroke();
+                }
+                if (!isExporting) this.drawDeleteButton(ctx);
+            }
+            getState() { return { type: this.type, id: this.id, x: this.x, y: this.y, imgSrc: this.imgSrc, relativeScale: this.relativeScale, offsetX: this.offsetX, offsetY: this.offsetY, bgColor: this.bgColor, bgOpacity: this.bgOpacity }; }
+            setState(state) { Object.assign(this, state); this.isNew = false; this.loadImage(); }
+        }
+        
+        class TextTile extends BaseTile {
+            constructor(app, id, x, y) {
+                super(app, id, x, y, 'text');
+                this.text = 'New Text'; this.fontSize = 48; this.font = 'Noto Sans JP';
+                this.color = '#333333'; this.isBold = false; this.isItalic = false; this.textAlign = 'center';
+            }
+            draw(ctx, isExporting = false) {
+                const s = this.app.globalSettings, r = this.size / 2;
+                ctx.save();
+                ctx.beginPath(); this._drawShapePath(ctx, r); ctx.closePath();
+                ctx.globalAlpha = this.bgOpacity;
+                ctx.fillStyle = this.app.canvasManager.resolveColor(this.bgColor);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+                if (s.borderWidth > 0) {
+                    ctx.strokeStyle = this.app.canvasManager.resolveColor(s.borderColor);
+                    ctx.lineWidth = s.borderWidth;
+                    ctx.stroke();
+                }
+                ctx.restore();
+                ctx.save();
+                ctx.fillStyle = this.color;
+                const style = `${this.isItalic ? 'italic ' : ''}${this.isBold ? 'bold ' : ''}`;
+                ctx.font = `${style}${this.fontSize}px "${this.font}"`;
+                ctx.textAlign = this.textAlign; ctx.textBaseline = 'middle';
+                const lines = this.text.split('\n'), lineHeight = this.fontSize * 1.2;
+                const totalHeight = lines.length * lineHeight;
+                let startY = this.y - totalHeight / 2 + lineHeight / 2;
+                lines.forEach(line => { ctx.fillText(line, this.x, startY, this.size - 20); startY += lineHeight; });
+                ctx.restore();
+                if (!isExporting) this.drawDeleteButton(ctx);
+            }
+            getState() { return { type: this.type, id: this.id, x: this.x, y: this.y, text: this.text, fontSize: this.fontSize, font: this.font, color: this.color, isBold: this.isBold, isItalic: this.isItalic, textAlign: this.textAlign, bgColor: this.bgColor, bgOpacity: this.bgOpacity }; }
+            setState(state) { Object.assign(this, state); }
+        }
+
+        // ==================================================================
+        // --- 7. メインアプリケーションクラス (App) ---
+        // ==================================================================
+        class App {
+            constructor() {
+                this.canvas = document.getElementById('main-canvas');
+                this.resetToDefaults(false);
+                this.bgImage = new Image();
+                this.canvasManager = new CanvasManager(this);
+                this.tileManager = new TileManager(this);
+                this.uiManager = new UIManager(this);
+                this.stateManager = new StateManager(this);
+                this.draggingTile = null;
+                this.dragOffset = { x: 0, y: 0 };
+                this.initEventListeners();
+                this.loadFromLocalStorage();
+                this.uiManager.pushView('main');
+                this.canvasManager.draw();
+                this.stateManager.recordState();
+            }
+            
+            resetToDefaults(record = true) {
+                this.globalSettings = { shape: 'circle', size: INITIAL_TILE_SIZE, borderWidth: 4, borderColor: '#333333', allowOverlap: false };
+                this.graphSettings = { 
+                    bgColor: '#FFFFFF', 
+                    grid: { style: 'solid', interval: 60, width: 1, color: '#E0E0E0' },
+                    backgroundImage: { src: null, opacity: 1, scale: 1, offsetX: 0, offsetY: 0 },
+                    viewMode: 'full'
+                };
+                this.xRange = { min: -120, max: 120 };
+                this.yRange = { min: -120, max: 120 };
+                this.axisSettings = {
+                    x_neg: { label: 'ちかい', color: 'var(--red)', width: 5, labelSize: 25, fontFamily: '"Noto Sans JP", sans-serif', isBold: false, isItalic: false, hasShadow: false },
+                    x_pos: { label: 'とおい', color: 'var(--blue)', width: 5, labelSize: 25, fontFamily: '"Noto Sans JP", sans-serif', isBold: false, isItalic: false, hasShadow: false },
+                    y_pos: { label: 'ちいさい', color: 'var(--yellow)', width: 5, labelSize: 25, fontFamily: '"Noto Sans JP", sans-serif', isBold: false, isItalic: false, hasShadow: false },
+                    y_neg: { label: 'おおきい', color: 'var(--green)', width: 5, labelSize: 25, fontFamily: '"Noto Sans JP", sans-serif', isBold: false, isItalic: false, hasShadow: false },
+                };
+                if (this.tileManager) this.tileManager.tiles = [];
+                if (record) { this.stateManager.recordState(); this.canvasManager.draw(); }
+            }
+            
+            resetAxisToDefault(axisKey) {
+                const defaultAxisSettings = {
+                    x_neg: { label: 'ちかい', color: 'var(--red)', width: 5, labelSize: 25, fontFamily: '"Noto Sans JP", sans-serif', isBold: false, isItalic: false, hasShadow: false },
+                    x_pos: { label: 'とおい', color: 'var(--blue)', width: 5, labelSize: 25, fontFamily: '"Noto Sans JP", sans-serif', isBold: false, isItalic: false, hasShadow: false },
+                    y_pos: { label: 'ちいさい', color: 'var(--yellow)', width: 5, labelSize: 25, fontFamily: '"Noto Sans JP", sans-serif', isBold: false, isItalic: false, hasShadow: false },
+                    y_neg: { label: 'おおきい', color: 'var(--green)', width: 5, labelSize: 25, fontFamily: '"Noto Sans JP", sans-serif', isBold: false, isItalic: false, hasShadow: false },
+                };
+                this.axisSettings[axisKey] = { ...defaultAxisSettings[axisKey] };
+                this.stateManager.recordState();
+                this.canvasManager.draw();
+            }
+
+            initEventListeners() {
+                const c = this.canvas;
+                c.addEventListener('mousedown', this.onMouseDown.bind(this));
+                c.addEventListener('mousemove', this.onMouseMove.bind(this));
+                c.addEventListener('mouseup', this.onMouseUp.bind(this));
+                c.addEventListener('dblclick', this.onDoubleClick.bind(this));
+                c.addEventListener('dragover', (e) => e.preventDefault());
+                c.addEventListener('drop', this.onDrop.bind(this));
+                document.getElementById('save-btn').onclick = () => this.saveProject();
+                document.getElementById('load-btn').onclick = () => document.getElementById('load-file-input').click();
+                document.getElementById('load-file-input').onchange = (e) => this.loadProject(e.target.files[0]);
+                document.getElementById('export-btn').onclick = () => this.handleMenuClick('export');
+                document.getElementById('help-btn').onclick = () => this.handleMenuClick('help');
+                document.getElementById('lang-btn').onclick = () => switchLanguage();
+                window.addEventListener('keydown', (e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); this.stateManager.undo(); }
+                    if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'Z'))) { e.preventDefault(); this.stateManager.redo(); }
+                });
+            }
+
+            handleMenuClick(view) {
+                const currentView = this.uiManager.viewStack[this.uiManager.viewStack.length - 1];
+                if (['tile', 'text', 'axis', 'export', 'help'].includes(currentView.view)) {
+                    this.uiManager.popView();
+                }
+                this.uiManager.pushView(view);
+            }
+
+            onMouseDown(e) {
+                const { x, y } = this.getCanvasCoords(e);
+                const tile = this.tileManager.getTileAt(x, y);
+                if (tile && tile.isPointOnDeleteButton(x, y)) {
+                    this.tileManager.removeTile(tile.id);
+                    const currentView = this.uiManager.viewStack[this.uiManager.viewStack.length - 1];
+                    if (currentView.data === tile) {
+                        this.uiManager.popView();
+                    } else {
+                        this.uiManager.render();
+                    }
+                    this.stateManager.recordState(); 
+                    this.canvasManager.draw();
+                    return;
+                }
+                
+                if (tile) {
+                    this.draggingTile = tile;
+                    this.dragOffset = { x: tile.x - x, y: tile.y - y };
+                    this.tileManager.tiles = this.tileManager.tiles.filter(t => t !== tile);
+                    this.tileManager.tiles.push(tile);
+                    this.canvas.style.cursor = 'grabbing';
+                }
+            }
+
+            onMouseMove(e) {
+                const { x, y } = this.getCanvasCoords(e);
+                
+                if (this.draggingTile) {
+                    const r = this.draggingTile.size / 2;
+                    this.draggingTile.x = Math.max(r, Math.min(this.canvas.width - r, x + this.dragOffset.x));
+                    this.draggingTile.y = Math.max(r, Math.min(this.canvas.height - r, y + this.dragOffset.y));
+                    this.canvasManager.draw();
+                } else {
+                    this.canvas.style.cursor = this.tileManager.getTileAt(x, y) ? 'pointer' : 'grab';
+                }
+            }
+
+            onMouseUp(e) {
+                if(this.draggingTile) {
+                    this.tileManager.resolveCollisions(this.draggingTile);
+                    this.canvasManager.draw();
+                }
+                if (this.draggingTile) this.stateManager.recordState();
+                this.draggingTile = null;
+                this.canvas.style.cursor = 'grab';
+            }
+
+            onDoubleClick(e) {
+                const { x, y } = this.getCanvasCoords(e);
+                const tile = this.tileManager.getTileAt(x, y);
+                const axisKey = this.getAxisPartAt(x, y);
+
+                const currentView = this.uiManager.viewStack[this.uiManager.viewStack.length - 1];
+                if (['tile', 'text', 'axis'].includes(currentView.view)) {
+                    this.uiManager.popView();
+                }
+
+                if (tile) {
+                    this.uiManager.pushView(tile.type, tile);
+                    return;
+                }
+                if (axisKey) {
+                    this.uiManager.pushView('axis', axisKey);
+                    return;
+                }
+                
+                const newTile = new TextTile(this, null, x, y);
+                this.tileManager.addTile(newTile);
+                this.stateManager.recordState(); this.canvasManager.draw();
+                this.uiManager.pushView('text', newTile);
+            }
+
+            onDrop(e) {
+                e.preventDefault();
+                const { x, y } = this.getCanvasCoords(e);
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const tile = new ImageTile(this, null, x, y, event.target.result);
+                        this.tileManager.addTile(tile);
+                        this.tileManager.resolveCollisions(tile);
+                        this.stateManager.recordState();
+                        this.canvasManager.draw();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+            
+            getCanvasCoords(e) { const rect = this.canvas.getBoundingClientRect(); return { x: e.clientX - rect.left, y: e.clientY - rect.top }; }
+            
+            getAxisPartAt(px, py) {
+                const origin = this.canvasManager.logicalToCanvas(0,0);
+                const tolerance = 10;
+                if (Math.abs(py - origin.y) < tolerance) { return px < origin.x ? 'x_neg' : 'x_pos'; }
+                if (Math.abs(px - origin.x) < tolerance) { return py < origin.y ? 'y_pos' : 'y_neg'; }
+                return null;
+            }
+
+            loadBackgroundImage(src) {
+                this.bgImage.onload = () => {
+                    this.graphSettings.backgroundImage.src = src;
+                    this.canvasManager.draw();
+                };
+                this.bgImage.src = src;
+            }
+
+            saveProject() {
+                const state = this.stateManager.createSnapshot();
+                const blob = new Blob([state], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob); a.download = `distribution-map-${Date.now()}.json`;
+                a.click(); URL.revokeObjectURL(a.href);
+                this.saveToLocalStorage();
+            }
+            loadProject(file) {
+                if (!file) return;
+                this.showModal(T('confirmLoad'), '', (c) => {
+                    if (c) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            this.stateManager.restoreFromSnapshot(e.target.result);
+                            this.stateManager.undoStack = []; this.stateManager.redoStack = [];
+                            this.stateManager.recordState(); this.saveToLocalStorage();
+                        };
+                        reader.readAsText(file);
+                    }
+                });
+            }
+            saveToLocalStorage() { try { localStorage.setItem('distributionMapProject', this.stateManager.createSnapshot()); } catch (e) { console.error(e); } }
+            loadFromLocalStorage() { try { const state = localStorage.getItem('distributionMapProject'); if (state) this.stateManager.restoreFromSnapshot(state); } catch(e) { console.error(e); } }
+            exportImage() {
+                this.canvasManager.draw(true); // Draw for export (no UI elements)
+                const dataUrl = this.canvas.toDataURL('image/png');
+                const a = document.createElement('a'); a.href = dataUrl; a.download = 'distribution-map.png'; a.click();
+                this.canvasManager.draw(false); // Draw back to normal
+            }
+            showModal(title, message, callback) {
+                const overlay = document.createElement('div'); overlay.className = 'modal-overlay';
+                const content = document.createElement('div'); content.className = 'modal-content';
+                content.innerHTML = `<h3>${title}</h3><p>${message}</p><div class="modal-buttons"><button id="modal-no" data-lang-key="no"></button><button id="modal-yes" data-lang-key="yes" class="primary"></button></div>`;
+                overlay.appendChild(content); document.body.appendChild(overlay);
+                document.getElementById('modal-yes').onclick = () => { document.body.removeChild(overlay); callback(true); };
+                document.getElementById('modal-no').onclick = () => { document.body.removeChild(overlay); callback(false); };
+                
+                overlay.querySelectorAll('[data-lang-key]').forEach(el => {
+                    const key = el.dataset.langKey;
+                    el.textContent = T(key);
+                });
+            }
+        }
+
+        // ==================================================================
+        // --- アプリケーションの起動 ---
+        // ==================================================================
+        app = new App();
+
+    </script>
+</body>
+</html>
