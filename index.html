@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>画像放り込み分布図（XY軸）</title>
+    <link rel="icon" href="favicon7.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -139,6 +140,20 @@
         .form-group {
             margin-bottom: 12px;
         }
+        
+        .form-group.inline {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        .form-group.inline > div:first-child {
+            flex-grow: 1;
+        }
+        .form-group.inline > div:last-child {
+            flex-shrink: 0;
+            width: 40px;
+        }
+
 
         .form-group label {
             display: block;
@@ -176,9 +191,6 @@
             align-items: center;
             gap: 8px;
         }
-        .color-input-wrapper input[type="text"] {
-            flex-grow: 1;
-        }
         .color-input-wrapper input[type="color"] {
             padding: 0;
             width: 100%;
@@ -190,15 +202,8 @@
         
         .font-style-buttons {
             display: flex;
-            gap: 5px;
-        }
-
-        .font-style-buttons button {
-            flex-grow: 1;
-        }
-        .font-style-buttons button.active {
-            background-color: var(--primary-color);
-            color: white;
+            gap: 15px;
+            align-items: center;
         }
         
         #bg-drop-zone {
@@ -276,24 +281,18 @@
              background-color: #f5b041;
         }
         
-        .back-btn-container {
+        .title-with-button {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 16px;
+            width: 100%;
+        }
+        .title-with-button button {
+            padding: 4px 8px;
+            font-size: 0.8em;
+            background-color: #555;
         }
 
-        button.back-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0;
-            font-size: 0.9em;
-            color: var(--text-muted);
-        }
-        button.back-btn:hover {
-            color: var(--text-color);
-        }
 
         /* --- ヘルプ表示 --- */
         .help-content {
@@ -408,7 +407,7 @@
                 // Global Tile Settings
                 tileShape: "形状",
                 shapeCircle: "円形", shapeRoundedSquare: "角丸四角形", shapePentagon: "五角形", shapeHexagon: "六角形",
-                tileSize: "サイズ (px)", borderWidth: "枠線の太さ (px)", borderColor: "枠線の色",
+                tileSize: "サイズ (px)", borderWidth: "枠線の太さ", borderColor: "枠線の色",
                 tileOverlap: "タイルの重なり", overlapAllow: "重複する", overlapForbid: "重複しない",
                 tileBackgroundColor: "背景色", tileBackgroundOpacity: "背景透過率 (%)",
                 // Graph Area Settings
@@ -417,21 +416,21 @@
                 bgImageDrop: "ここに画像をドロップ",
                 bgImageOpacity: "透過率 (%)",
                 bgImageScale: "拡大率 (%)",
-                bgImageOffsetX: "オフセット X",
-                bgImageOffsetY: "オフセット Y",
+                bgImageOffset: "位置 (横/縦)",
                 viewMode: "表示範囲", viewModeFull: "マイナスまで", viewModeQuadrant1: "プラスのみ",
-                grid: "補助線", gridStyle: "線の種類", styleSolid: "実線", styleDashed: "点線", styleNone: "表示しない",
-                gridInterval: "間隔 (論理単位)", gridWidth: "線の太さ (px)", gridColor: "線の色",
+                grid: "補助線", gridStyle: "補助線の種類", styleSolid: "実線", styleDashed: "点線", styleNone: "表示しない",
+                gridInterval: "間隔 (論理単位)", gridWidth: "線の太さ", gridColor: "線の色",
                 // Axis Settings
-                axisLabel: "ラベル", axisColor: "色", axisWidth: "軸の太さ (px)", axisLabelSize: "ラベルサイズ (px)",
+                axisLabel: "ラベル", axisColor: "色", axisWidth: "軸の太さ", axisLabelSize: "ラベルサイズ (px)",
                 axisLabelFont: "フォント", axisLabelStyle: "スタイル", axisLabelShadow: "影",
                 axis_x_neg: "X軸 (マイナス方向)", axis_x_pos: "X軸 (プラス方向)",
                 axis_y_neg: "Y軸 (マイナス方向)", axis_y_pos: "Y軸 (プラス方向)",
                 // Selected Tile Settings
-                imageScale: "画像拡大率 (%)", imageOffsetX: "画像オフセット X", imageOffsetY: "画像オフセット Y",
+                imageScale: "画像拡大率 (%)", imageOffset: "位置 (横/縦)",
                 // Selected Text Settings
-                textContent: "テキスト内容", fontSize: "フォントサイズ (px)", fontStyle: "フォントスタイル",
-                bold: "太字", italic: "斜体", fontColor: "フォントの色", textAlign: "行揃え",
+                textContent: "テキスト内容", fontSize: "フォントサイズ", fontColor: "フォントの色", fontStyle: "スタイル",
+                bold: "太字", italic: "斜体", fontShadow: "影",
+                textAlign: "行揃え",
                 alignLeft: "左揃え", alignCenter: "中央揃え", alignRight: "右揃え",
                 deleteText: "このテキストを削除",
                 // Export Settings
@@ -440,12 +439,13 @@
                 exportWidth: "幅 (px)", exportHeight: "高さ (px)",
                 performExport: "出力実行",
                 // Help Content
-                helpDragDropImage: "画像ファイルをグラフにドラッグ＆ドロップしてタイルを追加します。",
+                helpDragDropImage: "画像ファイルをグラフにドラッグ＆ドロップしてタイルを追加します。使用する画像は分かりやすいフォルダにまとめておくことをおすすめします。",
                 helpMoveTile: "タイルをドラッグして移動します。",
                 helpEditText: "テキストをダブルクリックして編集します。",
-                helpAddText: "グラフの何もない領域をダブルクリックしてテキストを追加します。",
-                helpEditAxis: "軸をダブルクリックして設定を編集します。",
+                helpAddText: "グラフの何もない領域をダブルクリックするとテキストタイルを追加します。",
+                helpEditAxis: "軸をダブルクリックすると各軸のテキストと矢印を編集できます。",
                 helpBasicOps: "基本操作", helpTileOps: "タイル操作", helpAxisOps: "軸操作",
+                helpEditTile: "タイルをダブルクリックして画像や拡大率を編集します。",
                 // Modals & Alerts
                 confirmOverlapChangeTitle: "設定の変更",
                 confirmOverlapChangeMsg: "「重複する」から「重複しない」へは変更できません。この設定を続けますか？",
@@ -468,7 +468,7 @@
                 // Global Tile Settings
                 tileShape: "Shape",
                 shapeCircle: "Circle", shapeRoundedSquare: "Rounded Square", shapePentagon: "Pentagon", shapeHexagon: "Hexagon",
-                tileSize: "Size (px)", borderWidth: "Border Width (px)", borderColor: "Border Color",
+                tileSize: "Size (px)", borderWidth: "Border Width", borderColor: "Border Color",
                 tileOverlap: "Tile Overlap", overlapAllow: "Overlap", overlapForbid: "Do not overlap",
                 tileBackgroundColor: "Background Color", tileBackgroundOpacity: "Background Opacity (%)",
                 // Graph Area Settings
@@ -477,21 +477,21 @@
                 bgImageDrop: "Drop image here",
                 bgImageOpacity: "Opacity (%)",
                 bgImageScale: "Scale (%)",
-                bgImageOffsetX: "Offset X",
-                bgImageOffsetY: "Offset Y",
+                bgImageOffset: "Position (X/Y)",
                 viewMode: "View Mode", viewModeFull: "Full", viewModeQuadrant1: "Positive Only",
                 grid: "Grid Lines", gridStyle: "Line Style", styleSolid: "Solid", styleDashed: "Dashed", styleNone: "None",
-                gridInterval: "Interval (Logical Units)", gridWidth: "Line Width (px)", gridColor: "Line Color",
+                gridInterval: "Interval (Logical Units)", gridWidth: "Line Width", gridColor: "Line Color",
                 // Axis Settings
-                axisLabel: "Label", axisColor: "Color", axisWidth: "Axis Width (px)", axisLabelSize: "Label Size (px)",
+                axisLabel: "Label", axisColor: "Color", axisWidth: "Axis Width", axisLabelSize: "Label Size (px)",
                 axisLabelFont: "Font", axisLabelStyle: "Style", axisLabelShadow: "Shadow",
                 axis_x_neg: "X-Axis (Negative)", axis_x_pos: "X-Axis (Positive)",
                 axis_y_neg: "Y-Axis (Negative)", axis_y_pos: "Y-Axis (Positive)",
                 // Selected Tile Settings
-                imageScale: "Image Scale (%)", imageOffsetX: "Image Offset X", imageOffsetY: "Image Offset Y",
+                imageScale: "Image Scale (%)", imageOffset: "Position (X/Y)",
                 // Selected Text Settings
-                textContent: "Text Content", fontSize: "Font Size (px)", fontStyle: "Font Style",
-                bold: "Bold", italic: "Italic", fontColor: "Font Color", textAlign: "Text Align",
+                textContent: "Text Content", fontSize: "Font Size", fontColor: "Font Color", fontStyle: "Style",
+                bold: "Bold", italic: "Italic", fontShadow: "Shadow",
+                textAlign: "Text Align",
                 alignLeft: "Left", alignCenter: "Center", alignRight: "Right",
                 deleteText: "Delete this text",
                 // Export Settings
@@ -500,12 +500,13 @@
                 exportWidth: "Width (px)", exportHeight: "Height (px)",
                 performExport: "Export",
                 // Help Content
-                helpDragDropImage: "Drag & drop image files onto the graph to add tiles.",
+                helpDragDropImage: "Drag & drop image files onto the graph to add tiles. It is recommended to keep the images you use in an organized folder.",
                 helpMoveTile: "Drag tiles to move them.",
                 helpEditText: "Double-click text to edit it.",
                 helpAddText: "Double-click an empty area on the graph to add text.",
-                helpEditAxis: "Double-click an axis to edit its settings.",
+                helpEditAxis: "Double-click an axis to edit the text and arrow for each axis.",
                 helpBasicOps: "Basic Operations", helpTileOps: "Tile Operations", helpAxisOps: "Axis Operations",
+                helpEditTile: "Double-click a tile to edit the image and its scale.",
                 // Modals & Alerts
                 confirmOverlapChangeTitle: "Confirm Setting Change",
                 confirmOverlapChangeMsg: "You cannot change from 'Overlap' back to 'Do not overlap'. Do you want to proceed?",
@@ -573,8 +574,12 @@
                 Object.assign(this.app.yRange, state.yRange);
 
                 this.app.tileManager.tiles = state.tiles.map(tileState => {
-                    const TileClass = tileState.type === 'tile' ? ImageTile : TextTile;
-                    const tile = new TileClass(this.app, tileState.id, tileState.x, tileState.y, tileState.imgSrc);
+                    let tile;
+                    if (tileState.type === 'tile') {
+                        tile = new ImageTile(this.app, tileState.id, tileState.x, tileState.y, tileState.imgSrc);
+                    } else { // type is 'text'
+                        tile = new TextTile(this.app, tileState.id, tileState.x, tileState.y);
+                    }
                     tile.setState(tileState);
                     return tile;
                 });
@@ -583,7 +588,7 @@
                     this.app.loadBackgroundImage(this.app.graphSettings.backgroundImage.src);
                 }
 
-                this.app.uiManager.render();
+                this.app.uiManager.render(true); // Pass flag to preserve accordion state
                 this.app.canvasManager.draw();
             }
 
@@ -617,6 +622,10 @@
                 this.app = app;
                 this.panel = document.getElementById('ui-panel');
                 this.viewStack = [];
+                this.accordionStates = {
+                    graphAreaSettings: true, // true means closed
+                    globalTileSettings: true,
+                };
             }
             
             pushView(view, data = null) {
@@ -631,7 +640,7 @@
                 }
             }
             
-            render() {
+            render(preserveAccordionState = false) {
                 const current = this.viewStack[this.viewStack.length - 1];
                 if (!current) return;
                 
@@ -642,23 +651,33 @@
                 document.getElementById('export-btn').classList.toggle('active-purple', view === 'export');
                 document.getElementById('help-btn').classList.toggle('active-green', view === 'help');
 
-                if (this.viewStack.length > 1) {
-                    const header = document.createElement('div');
-                    header.className = 'back-btn-container';
+                if (view !== 'main') {
+                    const viewToTitleKey = {
+                        'tile': 'selectedTileSettings',
+                        'text': 'selectedTextSettings',
+                        'axis': 'axisSettings',
+                        'help': 'helpTitle',
+                        'export': 'exportSettings'
+                    };
+                    const titleKey = viewToTitleKey[view] || `${view}Settings`;
+                    const section = this.createSection(titleKey, false, T(titleKey));
+                    const titleDiv = section.container.querySelector('h3');
                     const backBtn = document.createElement('button');
                     backBtn.className = 'back-btn';
                     backBtn.dataset.langKey = 'back';
                     backBtn.onclick = () => this.popView();
-                    header.appendChild(backBtn);
-                    this.panel.appendChild(header);
-                }
+                    titleDiv.innerHTML = `<div class="title-with-button"><span>${T(titleKey)}</span></div>`;
+                    titleDiv.querySelector('span').after(backBtn);
+                    this.panel.appendChild(section.container);
 
-                if (view === 'main') this.renderMainView();
-                else if (view === 'axis') this.renderAxisSettings(data);
-                else if (view === 'tile') this.renderTileSettings(data);
-                else if (view === 'text') this.renderTextSettings(data);
-                else if (view === 'help') this.renderHelp();
-                else if (view === 'export') this.renderExportSettings();
+                    if (view === 'axis') this.renderAxisSettings(data, section.content);
+                    else if (view === 'tile') this.renderTileSettings(data, section.content);
+                    else if (view === 'text') this.renderTextSettings(data, section.content);
+                    else if (view === 'help') this.renderHelp(section.content);
+                    else if (view === 'export') this.renderExportSettings(section.content);
+                } else {
+                    this.renderMainView(preserveAccordionState);
+                }
                 
                  this.panel.querySelectorAll('[data-lang-key]').forEach(el => {
                     const key = el.dataset.langKey;
@@ -670,13 +689,17 @@
                 });
             }
             
-            renderMainView() {
-                this.renderGraphAreaSettings();
-                this.renderGlobalTileSettings();
+            renderMainView(preserveAccordionState = false) {
+                this.renderGraphAreaSettings(preserveAccordionState);
+                this.renderGlobalTileSettings(preserveAccordionState);
             }
 
-            renderGlobalTileSettings() {
+            renderGlobalTileSettings(preserveState) {
                 const section = this.createSection('globalTileSettings', true);
+                if (preserveState && this.accordionStates.globalTileSettings) {
+                    section.container.querySelector('h3').classList.add('closed');
+                    section.content.classList.add('closed');
+                }
                 this.createSelect(section.content, 'tileShape', this.app.globalSettings.shape, e => {
                     this.app.globalSettings.shape = e.target.value;
                     this.app.stateManager.recordState();
@@ -689,9 +712,14 @@
                     });
                     this.app.canvasManager.draw();
                 }, { min: 20, max: 400 });
-                this.createRange(section.content, 'borderWidth', this.app.globalSettings.borderWidth, e => { this.app.globalSettings.borderWidth = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 0, max: 30 });
-                this.createColorInput(section.content, 'borderColor', this.app.globalSettings.borderColor, color => { this.app.globalSettings.borderColor = color; this.app.canvasManager.draw(); });
                 
+                const borderGroup = document.createElement('div');
+                borderGroup.className = 'form-group inline';
+                const widthDiv = this.createRange(null, 'borderWidth', this.app.globalSettings.borderWidth, e => { this.app.globalSettings.borderWidth = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 0, max: 30 });
+                const colorDiv = this.createColorInput(null, 'borderColor', this.app.globalSettings.borderColor, color => { this.app.globalSettings.borderColor = color; this.app.canvasManager.draw(); });
+                borderGroup.append(widthDiv, colorDiv);
+                section.content.appendChild(borderGroup);
+
                 const overlapGroup = this.createGroup(section.content, 'tileOverlap');
                 const select = document.createElement('select');
                 select.innerHTML = `<option value="false">${T('overlapForbid')}</option><option value="true">${T('overlapAllow')}</option>`;
@@ -704,11 +732,19 @@
                     }
                 };
                 overlapGroup.appendChild(select);
+                
+                const resetBtn = this.createButton(section.content, 'resetToDefaults', () => { this.app.resetGlobalSettings(); this.render(true); });
+                resetBtn.classList.add('orange');
+                
                 this.panel.appendChild(section.container);
             }
 
-            renderGraphAreaSettings() {
+            renderGraphAreaSettings(preserveState) {
                 const section = this.createSection('graphAreaSettings', true);
+                if (preserveState && this.accordionStates.graphAreaSettings) {
+                    section.container.querySelector('h3').classList.add('closed');
+                    section.content.classList.add('closed');
+                }
                 
                 // View Mode
                 const viewModeGroup = this.createGroup(section.content, 'viewMode');
@@ -738,7 +774,7 @@
                             this.app.loadBackgroundImage(event.target.result);
                             this.app.graphSettings.backgroundImage.src = event.target.result;
                             this.app.stateManager.recordState();
-                            this.render();
+                            this.render(true);
                         };
                         reader.readAsDataURL(file);
                     }
@@ -749,68 +785,93 @@
                     const bgSettings = this.app.graphSettings.backgroundImage;
                     this.createRange(section.content, 'bgImageOpacity', bgSettings.opacity * 100, e => { bgSettings.opacity = parseFloat(e.target.value) / 100; this.app.canvasManager.draw(); }, { min: 0, max: 100 });
                     this.createRange(section.content, 'bgImageScale', bgSettings.scale * 100, e => { bgSettings.scale = parseFloat(e.target.value) / 100; this.app.canvasManager.draw(); }, { min: 10, max: 200 });
-                    this.createRange(section.content, 'bgImageOffsetX', bgSettings.offsetX, e => { bgSettings.offsetX = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: -400, max: 400 });
-                    this.createRange(section.content, 'bgImageOffsetY', bgSettings.offsetY, e => { bgSettings.offsetY = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: -400, max: 400 });
+                    
+                    const offsetGroup = this.createGroup(section.content, 'bgImageOffset');
+                    const xOffset = this.createRange(null, '', bgSettings.offsetX, e => { bgSettings.offsetX = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: -400, max: 400 });
+                    const yOffset = this.createRange(null, '', bgSettings.offsetY, e => { bgSettings.offsetY = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: -400, max: 400 });
+                    offsetGroup.append(xOffset, yOffset);
                 }
 
                 // Grid Section
                 this.createSelect(section.content, 'gridStyle', this.app.graphSettings.grid.style, e => { this.app.graphSettings.grid.style = e.target.value; this.app.stateManager.recordState(); this.app.canvasManager.draw(); }, { 'solid': T('styleSolid'), 'dashed': T('styleDashed'), 'none': T('styleNone') });
                 this.createRange(section.content, 'gridInterval', this.app.graphSettings.grid.interval, e => { this.app.graphSettings.grid.interval = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 5, max: 200, step: 5 });
-                this.createRange(section.content, 'gridWidth', this.app.graphSettings.grid.width, e => { this.app.graphSettings.grid.width = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 1, max: 10 });
-                this.createColorInput(section.content, 'gridColor', this.app.graphSettings.grid.color, color => { this.app.graphSettings.grid.color = color; this.app.canvasManager.draw(); });
+
+                const gridStyleGroup = document.createElement('div');
+                gridStyleGroup.className = 'form-group inline';
+                const gridWidthDiv = this.createRange(null, 'gridWidth', this.app.graphSettings.grid.width, e => { this.app.graphSettings.grid.width = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 1, max: 10 });
+                const gridColorDiv = this.createColorInput(null, 'gridColor', this.app.graphSettings.grid.color, color => { this.app.graphSettings.grid.color = color; this.app.canvasManager.draw(); });
+                gridStyleGroup.append(gridWidthDiv, gridColorDiv);
+                section.content.appendChild(gridStyleGroup);
+                
+                const resetBtn = this.createButton(section.content, 'resetToDefaults', () => { this.app.resetGraphSettings(); this.render(true); });
+                resetBtn.classList.add('orange');
+
                 this.panel.appendChild(section.container);
             }
 
-            renderAxisSettings(axisKey) {
+            renderAxisSettings(axisKey, parentEl) {
                 const axis = this.app.axisSettings[axisKey];
-                const section = this.createSection('axisSettings', false, T('axis_' + axisKey));
-                this.createInput(section.content, 'axisLabel', axis.label, e => { axis.label = e.target.value; this.app.canvasManager.draw(); });
-                this.createRange(section.content, 'axisLabelSize', axis.labelSize, e => { axis.labelSize = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 8, max: 48 });
-                this.createSelect(section.content, 'axisLabelFont', axis.fontFamily, e => { axis.fontFamily = e.target.value; this.app.stateManager.recordState(); this.app.canvasManager.draw(); }, {
+                this.createInput(parentEl, 'axisLabel', axis.label, e => { axis.label = e.target.value; this.app.canvasManager.draw(); });
+                this.createSelect(parentEl, 'axisLabelFont', axis.fontFamily, e => { axis.fontFamily = e.target.value; this.app.stateManager.recordState(); this.app.canvasManager.draw(); }, {
                     '"Noto Sans JP", sans-serif': 'Noto Sans JP',
                     'serif': 'Serif',
                     'sans-serif': 'Sans-Serif',
                     'monospace': 'Monospace'
                 });
-                const styleGroup = this.createGroup(section.content, 'axisLabelStyle');
-                const btnContainer = document.createElement('div'); btnContainer.className = 'font-style-buttons';
-                const boldBtn = document.createElement('button'); boldBtn.dataset.langKey = 'bold'; boldBtn.className = axis.isBold ? 'active' : '';
-                boldBtn.onclick = () => { axis.isBold = !axis.isBold; this.render(); this.app.stateManager.recordState(); this.app.canvasManager.draw(); };
-                const italicBtn = document.createElement('button'); italicBtn.dataset.langKey = 'italic'; italicBtn.className = axis.isItalic ? 'active' : '';
-                italicBtn.onclick = () => { axis.isItalic = !axis.isItalic; this.render(); this.app.stateManager.recordState(); this.app.canvasManager.draw(); };
-                btnContainer.append(boldBtn, italicBtn); styleGroup.appendChild(btnContainer);
+                this.createRange(parentEl, 'axisLabelSize', axis.labelSize, e => { axis.labelSize = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 8, max: 48 });
+                const styleGroup = this.createGroup(parentEl, 'axisLabelStyle');
+                styleGroup.style.display = 'flex'; styleGroup.style.gap = '15px'; styleGroup.style.alignItems = 'center';
+
+                const boldWrapper = document.createElement('div'); boldWrapper.className = 'checkbox-wrapper';
+                const boldCheck = document.createElement('input'); boldCheck.type = 'checkbox'; boldCheck.checked = axis.isBold; boldCheck.id = 'bold-check';
+                boldCheck.onchange = (e) => { axis.isBold = e.target.checked; this.app.stateManager.recordState(); this.app.canvasManager.draw(); };
+                const boldLabel = document.createElement('label'); boldLabel.htmlFor = 'bold-check'; boldLabel.dataset.langKey = 'bold';
+                boldWrapper.append(boldCheck, boldLabel);
+
+                const italicWrapper = document.createElement('div'); italicWrapper.className = 'checkbox-wrapper';
+                const italicCheck = document.createElement('input'); italicCheck.type = 'checkbox'; italicCheck.checked = axis.isItalic; italicCheck.id = 'italic-check';
+                italicCheck.onchange = (e) => { axis.isItalic = e.target.checked; this.app.stateManager.recordState(); this.app.canvasManager.draw(); };
+                const italicLabel = document.createElement('label'); italicLabel.htmlFor = 'italic-check'; italicLabel.dataset.langKey = 'italic';
+                italicWrapper.append(italicCheck, italicLabel);
                 
-                const shadowGroup = this.createGroup(section.content, 'axisLabelShadow');
-                const checkWrapper = document.createElement('div'); checkWrapper.className = 'checkbox-wrapper';
+                const shadowWrapper = document.createElement('div'); shadowWrapper.className = 'checkbox-wrapper';
                 const shadowCheck = document.createElement('input'); shadowCheck.type = 'checkbox'; shadowCheck.checked = axis.hasShadow;
                 shadowCheck.id = 'shadow-check';
                 shadowCheck.onchange = (e) => { axis.hasShadow = e.target.checked; this.app.stateManager.recordState(); this.app.canvasManager.draw(); };
-                const shadowLabel = document.createElement('label'); shadowLabel.htmlFor = 'shadow-check'; shadowLabel.textContent = '有効';
-                checkWrapper.append(shadowCheck, shadowLabel);
-                shadowGroup.appendChild(checkWrapper);
+                const shadowLabel = document.createElement('label'); shadowLabel.htmlFor = 'shadow-check'; shadowLabel.dataset.langKey = 'axisLabelShadow';
+                shadowWrapper.append(shadowCheck, shadowLabel);
 
-                this.createColorInput(section.content, 'axisColor', axis.color, color => { axis.color = color; this.app.canvasManager.draw(); });
-                this.createRange(section.content, 'axisWidth', axis.width, e => { axis.width = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 1, max: 10 });
+                styleGroup.append(boldWrapper, italicWrapper, shadowWrapper);
+
+                const axisStyleGroup = document.createElement('div');
+                axisStyleGroup.className = 'form-group inline';
+                const axisWidthDiv = this.createRange(null, 'axisWidth', axis.width, e => { axis.width = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 1, max: 10 });
+                const axisColorDiv = this.createColorInput(null, 'axisColor', axis.color, color => { axis.color = color; this.app.canvasManager.draw(); });
+                axisStyleGroup.append(axisWidthDiv, axisColorDiv);
+                parentEl.appendChild(axisStyleGroup);
                 
-                const resetBtn = this.createButton(section.content, 'resetToDefaults', () => { this.app.resetAxisToDefault(axisKey); this.render(); });
+                const resetBtn = this.createButton(parentEl, 'resetToDefaults', () => { this.app.resetAxisToDefault(axisKey); this.render(); });
                 resetBtn.classList.add('orange');
-                
-                this.panel.appendChild(section.container);
             }
             
-            renderTileSettings(tile) {
-                const section = this.createSection('selectedTileSettings');
-                this.createRange(section.content, 'imageScale', tile.relativeScale * 100, e => { tile.relativeScale = parseFloat(e.target.value) / 100; this.app.canvasManager.draw(); }, { min: 50, max: 150, step: 1 });
-                this.createRange(section.content, 'imageOffsetX', tile.offsetX, e => { tile.offsetX = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: -100, max: 100 });
-                this.createRange(section.content, 'imageOffsetY', tile.offsetY, e => { tile.offsetY = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: -100, max: 100 });
-                this.createColorInput(section.content, 'tileBackgroundColor', tile.bgColor, color => { tile.bgColor = color; this.app.canvasManager.draw(); });
-                this.createRange(section.content, 'tileBackgroundOpacity', tile.bgOpacity * 100, e => { tile.bgOpacity = parseFloat(e.target.value) / 100; this.app.canvasManager.draw(); }, { min: 0, max: 100 });
-                this.panel.appendChild(section.container);
+            renderTileSettings(tile, parentEl) {
+                this.createRange(parentEl, 'imageScale', tile.relativeScale * 100, e => { tile.relativeScale = parseFloat(e.target.value) / 100; this.app.canvasManager.draw(); }, { min: 50, max: 150, step: 1 });
+                
+                const offsetGroup = this.createGroup(parentEl, 'imageOffset');
+                const xOffset = this.createRange(null, '', tile.offsetX, e => { tile.offsetX = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: -100, max: 100 });
+                const yOffset = this.createRange(null, '', tile.offsetY, e => { tile.offsetY = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: -100, max: 100 });
+                offsetGroup.append(xOffset, yOffset);
+
+                const bgGroup = document.createElement('div');
+                bgGroup.className = 'form-group inline';
+                const bgOpacityDiv = this.createRange(null, 'tileBackgroundOpacity', tile.bgOpacity * 100, e => { tile.bgOpacity = parseFloat(e.target.value) / 100; this.app.canvasManager.draw(); }, { min: 0, max: 100 });
+                const bgColorDiv = this.createColorInput(null, 'tileBackgroundColor', tile.bgColor, color => { tile.bgColor = color; this.app.canvasManager.draw(); });
+                bgGroup.append(bgOpacityDiv, bgColorDiv);
+                parentEl.appendChild(bgGroup);
             }
 
-            renderTextSettings(textTile) {
-                const section = this.createSection('selectedTextSettings');
-                const group = this.createGroup(section.content, 'textContent');
+            renderTextSettings(textTile, parentEl) {
+                const group = this.createGroup(parentEl, 'textContent');
                 const textarea = document.createElement('textarea');
                 textarea.rows = 3; textarea.style.width = '100%'; textarea.style.backgroundColor = 'var(--input-bg)';
                 textarea.style.border = '1px solid var(--border-color)'; textarea.style.color = 'var(--text-color)';
@@ -818,35 +879,65 @@
                 textarea.oninput = (e) => { textTile.text = e.target.value; this.app.canvasManager.draw(); };
                 textarea.onchange = () => this.app.stateManager.recordState();
                 group.appendChild(textarea);
-                this.createRange(section.content, 'fontSize', textTile.fontSize, e => { textTile.fontSize = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 8, max: 150 });
-                const styleGroup = this.createGroup(section.content, 'fontStyle');
-                const btnContainer = document.createElement('div'); btnContainer.className = 'font-style-buttons';
-                const boldBtn = document.createElement('button'); boldBtn.dataset.langKey = 'bold'; boldBtn.className = textTile.isBold ? 'active' : '';
-                boldBtn.onclick = () => { textTile.isBold = !textTile.isBold; boldBtn.classList.toggle('active'); this.app.stateManager.recordState(); this.app.canvasManager.draw(); };
-                const italicBtn = document.createElement('button'); italicBtn.dataset.langKey = 'italic'; italicBtn.className = textTile.isItalic ? 'active' : '';
-                italicBtn.onclick = () => { textTile.isItalic = !textTile.isItalic; italicBtn.classList.toggle('active'); this.app.stateManager.recordState(); this.app.canvasManager.draw(); };
-                btnContainer.append(boldBtn, italicBtn); styleGroup.appendChild(btnContainer);
-                this.createColorInput(section.content, 'fontColor', textTile.color, color => { textTile.color = color; this.app.canvasManager.draw(); });
-                this.createSelect(section.content, 'textAlign', textTile.textAlign, e => { textTile.textAlign = e.target.value; this.app.canvasManager.draw(); }, { 'left': T('alignLeft'), 'center': T('alignCenter'), 'right': T('alignRight') });
-                this.createColorInput(section.content, 'tileBackgroundColor', textTile.bgColor, color => { textTile.bgColor = color; this.app.canvasManager.draw(); });
-                this.createRange(section.content, 'tileBackgroundOpacity', textTile.bgOpacity * 100, e => { textTile.bgOpacity = parseFloat(e.target.value) / 100; this.app.canvasManager.draw(); }, { min: 0, max: 100 });
-                const deleteBtn = this.createButton(section.content, 'deleteText', () => { this.app.tileManager.removeTile(textTile.id); this.popView(); this.app.stateManager.recordState(); this.app.canvasManager.draw(); });
+
+                this.createSelect(parentEl, 'axisLabelFont', textTile.font, e => { textTile.font = e.target.value; this.app.stateManager.recordState(); this.app.canvasManager.draw(); }, {
+                    '"Noto Sans JP", sans-serif': 'Noto Sans JP',
+                    'serif': 'Serif',
+                    'sans-serif': 'Sans-Serif',
+                    'monospace': 'Monospace'
+                });
+
+                const fontStyleGroup = document.createElement('div');
+                fontStyleGroup.className = 'form-group inline';
+                const fontSizeDiv = this.createRange(null, 'fontSize', textTile.fontSize, e => { textTile.fontSize = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 8, max: 150 });
+                const fontColorDiv = this.createColorInput(null, 'fontColor', textTile.color, color => { textTile.color = color; this.app.canvasManager.draw(); });
+                fontStyleGroup.append(fontSizeDiv, fontColorDiv);
+                parentEl.appendChild(fontStyleGroup);
+                
+                const styleGroup = this.createGroup(parentEl, 'fontStyle');
+                styleGroup.style.display = 'flex'; styleGroup.style.gap = '15px'; styleGroup.style.alignItems = 'center';
+                const boldWrapper = document.createElement('div'); boldWrapper.className = 'checkbox-wrapper';
+                const boldCheck = document.createElement('input'); boldCheck.type = 'checkbox'; boldCheck.checked = textTile.isBold; boldCheck.id = 'bold-check-text';
+                boldCheck.onchange = (e) => { textTile.isBold = e.target.checked; this.app.stateManager.recordState(); this.app.canvasManager.draw(); };
+                const boldLabel = document.createElement('label'); boldLabel.htmlFor = 'bold-check-text'; boldLabel.dataset.langKey = 'bold';
+                boldWrapper.append(boldCheck, boldLabel);
+
+                const italicWrapper = document.createElement('div'); italicWrapper.className = 'checkbox-wrapper';
+                const italicCheck = document.createElement('input'); italicCheck.type = 'checkbox'; italicCheck.checked = textTile.isItalic; italicCheck.id = 'italic-check-text';
+                italicCheck.onchange = (e) => { textTile.isItalic = e.target.checked; this.app.stateManager.recordState(); this.app.canvasManager.draw(); };
+                const italicLabel = document.createElement('label'); italicLabel.htmlFor = 'italic-check-text'; italicLabel.dataset.langKey = 'italic';
+                italicWrapper.append(italicCheck, italicLabel);
+
+                const shadowWrapper = document.createElement('div'); shadowWrapper.className = 'checkbox-wrapper';
+                const shadowCheck = document.createElement('input'); shadowCheck.type = 'checkbox'; shadowCheck.checked = textTile.hasShadow;
+                shadowCheck.id = 'text-shadow-check';
+                shadowCheck.onchange = (e) => { textTile.hasShadow = e.target.checked; this.app.stateManager.recordState(); this.app.canvasManager.draw(); };
+                const shadowLabel = document.createElement('label'); shadowLabel.htmlFor = 'text-shadow-check'; shadowLabel.dataset.langKey = 'fontShadow';
+                shadowWrapper.append(shadowCheck, shadowLabel);
+
+                styleGroup.append(boldWrapper, italicWrapper, shadowWrapper);
+
+                this.createSelect(parentEl, 'textAlign', textTile.textAlign, e => { textTile.textAlign = e.target.value; this.app.canvasManager.draw(); }, { 'left': T('alignLeft'), 'center': T('alignCenter'), 'right': T('alignRight') });
+                
+                const bgGroup = document.createElement('div');
+                bgGroup.className = 'form-group inline';
+                const bgOpacityDiv = this.createRange(null, 'tileBackgroundOpacity', textTile.bgOpacity * 100, e => { textTile.bgOpacity = parseFloat(e.target.value) / 100; this.app.canvasManager.draw(); }, { min: 0, max: 100 });
+                const bgColorDiv = this.createColorInput(null, 'tileBackgroundColor', textTile.bgColor, color => { textTile.bgColor = color; this.app.canvasManager.draw(); });
+                bgGroup.append(bgOpacityDiv, bgColorDiv);
+                parentEl.appendChild(bgGroup);
+
+                const deleteBtn = this.createButton(parentEl, 'deleteText', () => { this.app.tileManager.removeTile(textTile.id); this.popView(); this.app.stateManager.recordState(); this.app.canvasManager.draw(); });
                 deleteBtn.style.backgroundColor = 'var(--red)'; deleteBtn.style.color = 'white';
-                this.panel.appendChild(section.container);
             }
 
-            renderHelp() {
-                const section = this.createSection('helpTitle');
-                section.content.classList.add('help-content');
-                section.content.innerHTML += `<h4 data-lang-key="helpBasicOps"></h4><ul><li data-lang-key="helpDragDropImage"></li><li data-lang-key="helpAddText"></li></ul><h4 data-lang-key="helpTileOps"></h4><ul><li data-lang-key="helpMoveTile"></li><li>タイルをダブルクリックして画像や拡大率を編集します。</li><li data-lang-key="helpEditText"></li></ul><h4 data-lang-key="helpAxisOps"></h4><ul><li data-lang-key="helpEditAxis"></li></ul>`;
-                this.panel.appendChild(section.container);
+            renderHelp(parentEl) {
+                parentEl.classList.add('help-content');
+                parentEl.innerHTML += `<h4 data-lang-key="helpBasicOps"></h4><ul><li data-lang-key="helpDragDropImage"></li><li data-lang-key="helpAddText"></li></ul><h4 data-lang-key="helpTileOps"></h4><ul><li data-lang-key="helpMoveTile"></li><li data-lang-key="helpEditTile"></li><li data-lang-key="helpEditText"></li></ul><h4 data-lang-key="helpAxisOps"></h4><ul><li data-lang-key="helpEditAxis"></li></ul>`;
             }
             
-            renderExportSettings() {
-                const section = this.createSection('exportSettings');
-                this.createSelect(section.content, 'exportFormat', 'png', () => {}, { 'png': 'PNG', 'jpeg': 'JPEG' });
-                this.createButton(section.content, 'performExport', () => this.app.exportImage());
-                this.panel.appendChild(section.container);
+            renderExportSettings(parentEl) {
+                this.createSelect(parentEl, 'exportFormat', 'png', () => {}, { 'png': 'PNG', 'jpeg': 'JPEG' });
+                this.createButton(parentEl, 'performExport', () => this.app.exportImage());
             }
 
             createSection(titleKey, isAccordion = false, titleText = '') {
@@ -859,9 +950,15 @@
                 if (isAccordion) {
                     title.classList.add('accordion-header');
                     content.classList.add('accordion-content');
+                    const isClosed = this.app.uiManager.accordionStates[titleKey];
+                    if (isClosed) {
+                        title.classList.add('closed');
+                        content.classList.add('closed');
+                    }
                     title.onclick = () => {
                         title.classList.toggle('closed');
                         content.classList.toggle('closed');
+                        this.app.uiManager.accordionStates[titleKey] = title.classList.contains('closed');
                     };
                 }
                 return { container, content };
@@ -869,7 +966,11 @@
             createGroup(parent, labelKey) {
                 const group = document.createElement('div'); group.className = 'form-group';
                 const label = document.createElement('label'); label.dataset.langKey = labelKey;
-                group.appendChild(label); parent.appendChild(group); return group;
+                group.appendChild(label); 
+                if (parent) {
+                    parent.appendChild(group);
+                }
+                return group;
             }
             createInput(parent, labelKey, value, oninput) {
                 const group = this.createGroup(parent, labelKey);
@@ -878,7 +979,8 @@
                 group.appendChild(input);
             }
             createRange(parent, labelKey, value, oninput, { min, max, step = 1 }) {
-                const group = this.createGroup(parent, labelKey);
+                const group = labelKey ? this.createGroup(parent, labelKey) : document.createElement('div');
+                if(!labelKey && parent) parent.appendChild(group);
                 const container = document.createElement('div'); container.style.display = 'flex'; container.style.alignItems = 'center'; container.style.gap = '8px';
                 const range = document.createElement('input'); range.type = 'range'; range.min = min; range.max = max; range.step = step; range.value = value; range.style.flexGrow = '1';
                 const number = document.createElement('input'); number.type = 'number'; number.min = min; number.max = max; number.step = step; number.value = value; number.style.width = '60px';
@@ -887,14 +989,17 @@
                 number.oninput = (e) => { range.value = e.target.value; oninput(e); };
                 number.onchange = () => this.app.stateManager.recordState();
                 container.append(range, number); group.appendChild(container);
+                return group;
             }
             createColorInput(parent, labelKey, value, oninput) {
-                const group = this.createGroup(parent, labelKey);
+                const group = labelKey ? this.createGroup(parent, labelKey) : document.createElement('div');
+                 if(!labelKey && parent) parent.appendChild(group);
                 const wrapper = document.createElement('div'); wrapper.className = 'color-input-wrapper';
                 const colorInput = document.createElement('input'); colorInput.type = 'color'; colorInput.value = value;
                 colorInput.oninput = (e) => { const color = e.target.value; oninput(color); };
                 colorInput.onchange = () => this.app.stateManager.recordState();
                 wrapper.append(colorInput); group.appendChild(wrapper);
+                return group;
             }
             createSelect(parent, labelKey, value, onchange, options) {
                 const group = this.createGroup(parent, labelKey);
@@ -1252,7 +1357,7 @@
                 else this.baseScale = this.size / this.img.height;
             }
             loadImage() {
-                return new Promise((resolve) => {
+                return new Promise((resolve, reject) => {
                     this.img = new Image();
                     this.img.onload = () => {
                         if (this.isNew) {
@@ -1261,6 +1366,10 @@
                         }
                         resolve();
                     };
+                    this.img.onerror = () => {
+                        console.error("Failed to load image:", this.imgSrc);
+                        reject();
+                    }
                     this.img.src = this.imgSrc;
                 });
             }
@@ -1286,8 +1395,12 @@
                 }
                 if (!isExporting) this.drawDeleteButton(ctx);
             }
-            getState() { return { type: this.type, id: this.id, x: this.x, y: this.y, imgSrc: this.imgSrc, relativeScale: this.relativeScale, offsetX: this.offsetX, offsetY: this.offsetY, bgColor: this.bgColor, bgOpacity: this.bgOpacity }; }
-            setState(state) { Object.assign(this, state); this.isNew = false; this.loadImage(); }
+            getState() { return { type: this.type, id: this.id, x: this.x, y: this.y, imgSrc: this.imgSrc, baseScale: this.baseScale, relativeScale: this.relativeScale, offsetX: this.offsetX, offsetY: this.offsetY, bgColor: this.bgColor, bgOpacity: this.bgOpacity }; }
+            setState(state) { 
+                Object.assign(this, state); 
+                this.isNew = false; 
+                this.loadImage();
+            }
         }
         
         class TextTile extends BaseTile {
@@ -1332,7 +1445,6 @@
         class App {
             constructor() {
                 this.canvas = document.getElementById('main-canvas');
-                this.resetToDefaults(false);
                 this.bgImage = new Image();
                 this.canvasManager = new CanvasManager(this);
                 this.tileManager = new TileManager(this);
@@ -1340,6 +1452,7 @@
                 this.stateManager = new StateManager(this);
                 this.draggingTile = null;
                 this.dragOffset = { x: 0, y: 0 };
+                this.resetToDefaults(false);
                 this.initEventListeners();
                 this.loadFromLocalStorage();
                 this.uiManager.pushView('main');
@@ -1348,13 +1461,8 @@
             }
             
             resetToDefaults(record = true) {
-                this.globalSettings = { shape: 'circle', size: INITIAL_TILE_SIZE, borderWidth: 4, borderColor: '#333333', allowOverlap: false };
-                this.graphSettings = { 
-                    bgColor: '#FFFFFF', 
-                    grid: { style: 'solid', interval: 60, width: 1, color: '#E0E0E0' },
-                    backgroundImage: { src: null, opacity: 1, scale: 1, offsetX: 0, offsetY: 0 },
-                    viewMode: 'full'
-                };
+                this.resetGlobalSettings(false);
+                this.resetGraphSettings(false);
                 this.xRange = { min: -120, max: 120 };
                 this.yRange = { min: -120, max: 120 };
                 this.axisSettings = {
@@ -1365,6 +1473,28 @@
                 };
                 if (this.tileManager) this.tileManager.tiles = [];
                 if (record) { this.stateManager.recordState(); this.canvasManager.draw(); }
+            }
+            
+            resetGlobalSettings(record = true) {
+                this.globalSettings = { shape: 'circle', size: INITIAL_TILE_SIZE, borderWidth: 4, borderColor: '#333333', allowOverlap: false };
+                if(record) {
+                    this.stateManager.recordState();
+                    this.canvasManager.draw();
+                }
+            }
+
+            resetGraphSettings(record = true) {
+                this.graphSettings = { 
+                    bgColor: '#FFFFFF', 
+                    grid: { style: 'solid', interval: 60, width: 1, color: '#E0E0E0' },
+                    backgroundImage: { src: null, opacity: 1, scale: 1, offsetX: 0, offsetY: 0 },
+                    viewMode: 'full'
+                };
+                if (this.bgImage) this.bgImage.src = '';
+                if(record) {
+                    this.stateManager.recordState();
+                    this.canvasManager.draw();
+                }
             }
             
             resetAxisToDefault(axisKey) {
@@ -1488,10 +1618,12 @@
                     const reader = new FileReader();
                     reader.onload = (event) => {
                         const tile = new ImageTile(this, null, x, y, event.target.result);
-                        this.tileManager.addTile(tile);
-                        this.tileManager.resolveCollisions(tile);
-                        this.stateManager.recordState();
-                        this.canvasManager.draw();
+                        tile.loadImage().then(() => {
+                            this.tileManager.addTile(tile);
+                            this.tileManager.resolveCollisions(tile);
+                            this.stateManager.recordState();
+                            this.canvasManager.draw();
+                        });
                     };
                     reader.readAsDataURL(file);
                 }
