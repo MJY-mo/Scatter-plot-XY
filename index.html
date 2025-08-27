@@ -402,9 +402,9 @@
                 // UI Panel Titles
                 globalTileSettings: "タイル共通設定",
                 graphAreaSettings: "グラフエリア設定",
-                axisSettings: "軸設定",
-                selectedTileSettings: "選択中タイルの設定",
-                selectedTextSettings: "選択中テキストの設定",
+                axisSettings: "軸編集",
+                selectedTileSettings: "選択中タイルの編集",
+                selectedTextSettings: "選択中テキストの編集",
                 helpTitle: "操作説明",
                 exportSettings: "画像出力設定",
                 // Global Tile Settings
@@ -460,9 +460,9 @@
                 // UI Panel Titles
                 globalTileSettings: "Global Tile Settings",
                 graphAreaSettings: "Graph Area Settings",
-                axisSettings: "Axis Settings",
-                selectedTileSettings: "Selected Tile Settings",
-                selectedTextSettings: "Selected Text Settings",
+                axisSettings: "Edit Axis",
+                selectedTileSettings: "Edit Selected Tile",
+                selectedTextSettings: "Edit Selected Text",
                 helpTitle: "How to Use",
                 exportSettings: "Export Settings",
                 // Global Tile Settings
@@ -1065,10 +1065,16 @@
             }
 
             draw(isExporting = false) {
+                // Step 1: Clear the canvas completely.
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Step 2: Draw the background color with its opacity.
                 const color = this.resolveColor(this.app.graphSettings.bgColor);
                 const opacity = this.app.graphSettings.bgColorOpacity;
-                this.ctx.fillStyle = hexToRgba(color, opacity);
-                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                if (opacity > 0) {
+                    this.ctx.fillStyle = hexToRgba(color, opacity);
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                }
                 
                 const bg = this.app.graphSettings.backgroundImage;
                 if (bg.src && this.app.bgImage.complete && this.app.bgImage.naturalWidth > 0) {
@@ -1119,29 +1125,32 @@
 
             drawAxes() {
                 const origin = this.logicalToCanvas(0, 0);
+
+                // Draw all axis lines first
                 if (this.app.graphSettings.viewMode === 'full') {
                     this.drawAxisPart('x_neg', origin);
                     this.drawAxisPart('y_neg', origin);
-                    this.ctx.fillStyle = '#000000';
-                    this.ctx.beginPath();
-                    this.ctx.arc(origin.x, origin.y, 5, 0, Math.PI * 2);
-                    this.ctx.fill();
-                } else { // quadrant1
+                }
+                this.drawAxisPart('x_pos', origin);
+                this.drawAxisPart('y_pos', origin);
+
+                // Now determine dot position and draw it on top
+                let dotPosition = { ...origin };
+                let dotRadius = 5;
+
+                if (this.app.graphSettings.viewMode === 'quadrant1') {
                     const yAxisSettings = this.app.axisSettings['y_pos'];
                     const xAxisSettings = this.app.axisSettings['x_pos'];
                     const xOffset = (10 + yAxisSettings.width * 1.5) / 2 + 5;
                     const yOffset = (10 + xAxisSettings.width * 1.5) / 2 + 5;
-
-                    const adjustedOrigin = { x: origin.x + xOffset, y: origin.y - yOffset };
-                    
-                    this.ctx.fillStyle = '#000000';
-                    this.ctx.beginPath();
-                    this.ctx.arc(adjustedOrigin.x, adjustedOrigin.y, 8, 0, Math.PI * 2);
-                    this.ctx.fill();
+                    dotPosition = { x: origin.x + xOffset, y: origin.y - yOffset };
+                    dotRadius = 8;
                 }
-
-                this.drawAxisPart('x_pos', origin);
-                this.drawAxisPart('y_pos', origin);
+                
+                this.ctx.fillStyle = '#000000';
+                this.ctx.beginPath();
+                this.ctx.arc(dotPosition.x, dotPosition.y, dotRadius, 0, Math.PI * 2);
+                this.ctx.fill();
             }
             
             drawAxisPart(key, origin) {
@@ -1538,8 +1547,8 @@
             resetGraphSettings(record = true) {
                 this.graphSettings = { 
                     bgColor: '#FFFFFF', 
-                    bgColorOpacity: 1.0,
-                    grid: { style: 'solid', interval: 60, width: 1, color: '#E0E0E0' },
+                    bgColorOpacity: 0.0,
+                    grid: { style: 'solid', interval: 50, width: 1, color: '#E0E0E0' },
                     backgroundImage: { src: null, opacity: 1, scale: 1, offsetX: 0, offsetY: 0 },
                     viewMode: 'full'
                 };
@@ -1589,13 +1598,18 @@
             resizeCanvas() {
                 const container = document.getElementById('canvas-container');
                 const rect = container.getBoundingClientRect();
-                const padding = 40;
-                
-                const newWidth = rect.width - padding;
-                const newHeight = rect.height - padding;
+                const padding = 40; // Padding on both sides
 
-                this.canvas.width = newWidth > 0 ? newWidth : 0;
-                this.canvas.height = newHeight > 0 ? newHeight : 0;
+                // Calculate the available space for the canvas
+                const availableWidth = rect.width - padding;
+                const availableHeight = rect.height - padding;
+
+                // Determine the smaller dimension to maintain a square aspect ratio
+                const size = Math.min(availableWidth, availableHeight);
+
+                // Set both width and height to the same value
+                this.canvas.width = size > 0 ? size : 0;
+                this.canvas.height = size > 0 ? size : 0;
                 
                 this.canvasManager.draw();
             }
@@ -1616,9 +1630,17 @@
                 const { x, y } = this.getCanvasCoords(e);
                 const logicalCoords = this.canvasManager.canvasToLogical(x, y);
                 const tile = this.tileManager.getTileAt(logicalCoords.x, logicalCoords.y);
+                const currentView = this.uiManager.viewStack[this.uiManager.viewStack.length - 1];
+
+                // If a settings panel is open and the user clicks on the canvas background (not on a tile), close the panel.
+                if (['tile', 'text', 'axis'].includes(currentView.view) && !tile) {
+                    this.uiManager.popView();
+                    this.canvasManager.draw(); // Redraw to remove highlight
+                    return; // Stop further processing for this click
+                }
+
                 if (tile && tile.isPointOnDeleteButton(x, y)) {
                     this.tileManager.removeTile(tile.id);
-                    const currentView = this.uiManager.viewStack[this.uiManager.viewStack.length - 1];
                     if (currentView.data === tile) {
                         this.uiManager.popView();
                     } else {
@@ -1695,6 +1717,13 @@
 
             async onDrop(e) {
                 e.preventDefault();
+
+                // Close any open editing panel
+                const currentView = this.uiManager.viewStack[this.uiManager.viewStack.length - 1];
+                if (['tile', 'text', 'axis'].includes(currentView.view)) {
+                    this.uiManager.popView();
+                }
+
                 const { x, y } = this.getCanvasCoords(e);
                 const initialLogicalCoords = this.canvasManager.canvasToLogical(x, y);
                 const files = e.dataTransfer.files;
@@ -1747,9 +1776,15 @@
                     if (Math.abs(py - origin.y) < tolerance) { return px < origin.x ? 'x_neg' : 'x_pos'; }
                     if (Math.abs(px - origin.x) < tolerance) { return py < origin.y ? 'y_pos' : 'y_neg'; }
                 } else {
-                    if (py > origin.y - tolerance && px > origin.x - tolerance) {
-                        if (Math.abs(py - origin.y) < tolerance) return 'x_pos';
-                        if (Math.abs(px - origin.x) < tolerance) return 'y_pos';
+                    const yAxisSettings = this.axisSettings['y_pos'];
+                    const xAxisSettings = this.axisSettings['x_pos'];
+                    const xOffset = (10 + yAxisSettings.width * 1.5) / 2 + 5;
+                    const yOffset = (10 + xAxisSettings.width * 1.5) / 2 + 5;
+                    const adjustedOrigin = { x: origin.x + xOffset, y: origin.y - yOffset };
+
+                    if (py > adjustedOrigin.y - tolerance && px > adjustedOrigin.x - tolerance) {
+                        if (Math.abs(py - adjustedOrigin.y) < tolerance) return 'x_pos';
+                        if (Math.abs(px - adjustedOrigin.x) < tolerance) return 'y_pos';
                     }
                 }
                 return null;
