@@ -100,24 +100,25 @@
         }
 
         .ui-section {
-            margin-bottom: 24px;
+            margin-bottom: 16px;
+            border: 1px solid #555; /* 枠線を少し強調 */
+            border-radius: 4px;
+            overflow: hidden;
         }
         
-        .ui-section:last-child {
-            margin-bottom: 0;
-            border-bottom: none;
-        }
-
         .ui-section h3 {
             font-size: 1em;
             font-weight: 500;
-            margin-top: 0;
-            margin-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
+            margin: 0;
+            padding: 10px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            background-color: #333;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .ui-section h3.closed {
+             border-bottom: none;
         }
         
         .accordion-header {
@@ -131,6 +132,9 @@
         }
         .accordion-header.closed::after {
             transform: rotate(-90deg);
+        }
+        .accordion-content {
+            padding: 10px;
         }
         .accordion-content.closed {
             display: none;
@@ -146,7 +150,7 @@
             gap: 10px;
             align-items: flex-end;
         }
-        .form-group.inline > div:first-child {
+        .form-group.inline > div {
             flex-grow: 1;
         }
         .form-group.inline > div:last-child {
@@ -237,6 +241,8 @@
         canvas {
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
             cursor: grab;
+            max-width: 100%;
+            max-height: 100%;
         }
         canvas:active {
             cursor: grabbing;
@@ -383,9 +389,6 @@
         // ==================================================================
         // --- 1. グローバル設定 & 定数 ---
         // ==================================================================
-        const INITIAL_CANVAS_WIDTH = 810;
-        const INITIAL_CANVAS_HEIGHT = 810;
-        const INITIAL_TILE_SIZE = 80;
         const DELETE_BUTTON_SIZE = 24;
 
         // ==================================================================
@@ -412,6 +415,7 @@
                 tileBackgroundColor: "背景色", tileBackgroundOpacity: "背景透過率 (%)",
                 // Graph Area Settings
                 backgroundColor: "背景色",
+                bgColorOpacity: "透過率 (%)",
                 backgroundImage: "背景画像",
                 bgImageDrop: "ここに画像をドロップ",
                 bgImageOpacity: "透過率 (%)",
@@ -430,8 +434,6 @@
                 // Selected Text Settings
                 textContent: "テキスト内容", fontSize: "フォントサイズ", fontColor: "フォントの色", fontStyle: "スタイル",
                 bold: "太字", italic: "斜体", fontShadow: "影",
-                textAlign: "行揃え",
-                alignLeft: "左揃え", alignCenter: "中央揃え", alignRight: "右揃え",
                 deleteText: "このテキストを削除",
                 // Export Settings
                 exportFormat: "形式", exportSize: "サイズ",
@@ -443,12 +445,10 @@
                 helpMoveTile: "タイルをドラッグして移動します。",
                 helpEditText: "テキストをダブルクリックして編集します。",
                 helpAddText: "グラフの何もない領域をダブルクリックするとテキストタイルを追加します。",
-                helpEditAxis: "軸をダブルクリックすると各軸のテキストと矢印を編集できます。",
+                helpEditAxis: "軸や軸ラベルをダブルクリックすると各軸のテキストと矢印を編集できます。",
                 helpBasicOps: "基本操作", helpTileOps: "タイル操作", helpAxisOps: "軸操作",
                 helpEditTile: "タイルをダブルクリックして画像や拡大率を編集します。",
                 // Modals & Alerts
-                confirmOverlapChangeTitle: "設定の変更",
-                confirmOverlapChangeMsg: "「重複する」から「重複しない」へは変更できません。この設定を続けますか？",
                 errorTileOutOfBounds: "範囲外へはみ出してしまいます。範囲が足りない場合は軸を拡張して下さい。",
                 confirmLoad: "現在のプロジェクトは破棄されます。新しいプロジェクトを読み込みますか？",
                 yes: "はい", no: "いいえ",
@@ -473,6 +473,7 @@
                 tileBackgroundColor: "Background Color", tileBackgroundOpacity: "Background Opacity (%)",
                 // Graph Area Settings
                 backgroundColor: "Background Color",
+                bgColorOpacity: "Opacity (%)",
                 backgroundImage: "Background Image",
                 bgImageDrop: "Drop image here",
                 bgImageOpacity: "Opacity (%)",
@@ -491,8 +492,6 @@
                 // Selected Text Settings
                 textContent: "Text Content", fontSize: "Font Size", fontColor: "Font Color", fontStyle: "Style",
                 bold: "Bold", italic: "Italic", fontShadow: "Shadow",
-                textAlign: "Text Align",
-                alignLeft: "Left", alignCenter: "Center", alignRight: "Right",
                 deleteText: "Delete this text",
                 // Export Settings
                 exportFormat: "Format", exportSize: "Size",
@@ -504,12 +503,10 @@
                 helpMoveTile: "Drag tiles to move them.",
                 helpEditText: "Double-click text to edit it.",
                 helpAddText: "Double-click an empty area on the graph to add text.",
-                helpEditAxis: "Double-click an axis to edit the text and arrow for each axis.",
+                helpEditAxis: "Double-click an axis or its label to edit the text and arrow for each axis.",
                 helpBasicOps: "Basic Operations", helpTileOps: "Tile Operations", helpAxisOps: "Axis Operations",
                 helpEditTile: "Double-click a tile to edit the image and its scale.",
                 // Modals & Alerts
-                confirmOverlapChangeTitle: "Confirm Setting Change",
-                confirmOverlapChangeMsg: "You cannot change from 'Overlap' back to 'Do not overlap'. Do you want to proceed?",
                 errorTileOutOfBounds: "Tile would be pushed out of bounds. Please expand the axis if more space is needed.",
                 confirmLoad: "The current project will be discarded. Load a new project?",
                 yes: "Yes", no: "No",
@@ -521,6 +518,21 @@
 
         function T(key) {
             return L10N[currentLang][key] || key;
+        }
+        
+        function hexToRgba(hex, alpha) {
+            if (!hex) hex = '#000000';
+            let r = 0, g = 0, b = 0;
+            if (hex.length === 4) {
+                r = "0x" + hex[1] + hex[1];
+                g = "0x" + hex[2] + hex[2];
+                b = "0x" + hex[3] + hex[3];
+            } else if (hex.length === 7) {
+                r = "0x" + hex[1] + hex[2];
+                g = "0x" + hex[3] + hex[4];
+                b = "0x" + hex[5] + hex[6];
+            }
+            return `rgba(${+r},${+g},${+b},${alpha})`;
         }
 
         function switchLanguage() {
@@ -726,10 +738,8 @@
                 select.value = this.app.globalSettings.allowOverlap;
                 select.onchange = (e) => {
                     const allow = e.target.value === 'true';
-                    if (this.app.globalSettings.allowOverlap && !allow) { select.value = 'true'; return; }
-                    if (!this.app.globalSettings.allowOverlap && allow) {
-                        this.app.showModal(T('confirmOverlapChangeTitle'), T('confirmOverlapChangeMsg'), (c) => { if (c) { this.app.globalSettings.allowOverlap = true; this.app.stateManager.recordState(); } else { select.value = 'false'; }});
-                    }
+                    this.app.globalSettings.allowOverlap = allow;
+                    this.app.stateManager.recordState();
                 };
                 overlapGroup.appendChild(select);
                 
@@ -755,7 +765,12 @@
                 viewModeSelect.onchange = (e) => { this.app.graphSettings.viewMode = e.target.value; this.app.stateManager.recordState(); this.app.canvasManager.draw(); };
                 viewModeGroup.appendChild(viewModeSelect);
 
-                this.createColorInput(section.content, 'backgroundColor', this.app.graphSettings.bgColor, color => { this.app.graphSettings.bgColor = color; this.app.canvasManager.draw(); });
+                const bgGroup = document.createElement('div');
+                bgGroup.className = 'form-group inline';
+                const bgColorDiv = this.createColorInput(null, 'backgroundColor', this.app.graphSettings.bgColor, color => { this.app.graphSettings.bgColor = color; this.app.canvasManager.draw(); });
+                const bgOpacityDiv = this.createRange(null, 'bgColorOpacity', this.app.graphSettings.bgColorOpacity * 100, e => { this.app.graphSettings.bgColorOpacity = parseFloat(e.target.value) / 100; this.app.canvasManager.draw(); }, { min: 0, max: 100 });
+                bgGroup.append(bgColorDiv, bgOpacityDiv);
+                section.content.appendChild(bgGroup);
                 
                 // Background Image Section
                 this.createGroup(section.content, 'backgroundImage');
@@ -794,7 +809,7 @@
 
                 // Grid Section
                 this.createSelect(section.content, 'gridStyle', this.app.graphSettings.grid.style, e => { this.app.graphSettings.grid.style = e.target.value; this.app.stateManager.recordState(); this.app.canvasManager.draw(); }, { 'solid': T('styleSolid'), 'dashed': T('styleDashed'), 'none': T('styleNone') });
-                this.createRange(section.content, 'gridInterval', this.app.graphSettings.grid.interval, e => { this.app.graphSettings.grid.interval = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 5, max: 200, step: 5 });
+                this.createRange(section.content, 'gridInterval', this.app.graphSettings.grid.interval, e => { this.app.graphSettings.grid.interval = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 5, max: 120, step: 5 });
 
                 const gridStyleGroup = document.createElement('div');
                 gridStyleGroup.className = 'form-group inline';
@@ -845,7 +860,7 @@
 
                 const axisStyleGroup = document.createElement('div');
                 axisStyleGroup.className = 'form-group inline';
-                const axisWidthDiv = this.createRange(null, 'axisWidth', axis.width, e => { axis.width = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 1, max: 10 });
+                const axisWidthDiv = this.createRange(null, 'axisWidth', axis.width, e => { axis.width = parseInt(e.target.value); this.app.canvasManager.draw(); }, { min: 1, max: 15 });
                 const axisColorDiv = this.createColorInput(null, 'axisColor', axis.color, color => { axis.color = color; this.app.canvasManager.draw(); });
                 axisStyleGroup.append(axisWidthDiv, axisColorDiv);
                 parentEl.appendChild(axisStyleGroup);
@@ -916,8 +931,6 @@
                 shadowWrapper.append(shadowCheck, shadowLabel);
 
                 styleGroup.append(boldWrapper, italicWrapper, shadowWrapper);
-
-                this.createSelect(parentEl, 'textAlign', textTile.textAlign, e => { textTile.textAlign = e.target.value; this.app.canvasManager.draw(); }, { 'left': T('alignLeft'), 'center': T('alignCenter'), 'right': T('alignRight') });
                 
                 const bgGroup = document.createElement('div');
                 bgGroup.className = 'form-group inline';
@@ -936,7 +949,7 @@
             }
             
             renderExportSettings(parentEl) {
-                this.createSelect(parentEl, 'exportFormat', 'png', () => {}, { 'png': 'PNG', 'jpeg': 'JPEG' });
+                this.createSelect(parentEl, 'exportFormat', 'png', () => {}, { 'png': 'PNG', 'jpeg': 'JPEG' }, 'export-format-select');
                 this.createButton(parentEl, 'performExport', () => this.app.exportImage());
             }
 
@@ -954,11 +967,14 @@
                     if (isClosed) {
                         title.classList.add('closed');
                         content.classList.add('closed');
+                        title.style.borderBottom = 'none';
                     }
                     title.onclick = () => {
-                        title.classList.toggle('closed');
-                        content.classList.toggle('closed');
-                        this.app.uiManager.accordionStates[titleKey] = title.classList.contains('closed');
+                        const isNowClosed = !title.classList.contains('closed');
+                        title.classList.toggle('closed', isNowClosed);
+                        content.classList.toggle('closed', isNowClosed);
+                        title.style.borderBottom = isNowClosed ? 'none' : `1px solid ${this.app.canvasManager.resolveColor('--border-color')}`;
+                        this.app.uiManager.accordionStates[titleKey] = isNowClosed;
                     };
                 }
                 return { container, content };
@@ -1001,9 +1017,10 @@
                 wrapper.append(colorInput); group.appendChild(wrapper);
                 return group;
             }
-            createSelect(parent, labelKey, value, onchange, options) {
+            createSelect(parent, labelKey, value, onchange, options, id = null) {
                 const group = this.createGroup(parent, labelKey);
                 const select = document.createElement('select');
+                if (id) select.id = id;
                 for (const [val, text] of Object.entries(options)) {
                     const option = document.createElement('option'); option.value = val; option.textContent = text; select.appendChild(option);
                 }
@@ -1023,8 +1040,6 @@
                 this.app = app;
                 this.canvas = document.getElementById('main-canvas');
                 this.ctx = this.canvas.getContext('2d');
-                this.canvas.width = INITIAL_CANVAS_WIDTH;
-                this.canvas.height = INITIAL_CANVAS_HEIGHT;
                 this.colorCache = {};
             }
             
@@ -1050,7 +1065,9 @@
             }
 
             draw(isExporting = false) {
-                this.ctx.fillStyle = this.resolveColor(this.app.graphSettings.bgColor);
+                const color = this.resolveColor(this.app.graphSettings.bgColor);
+                const opacity = this.app.graphSettings.bgColorOpacity;
+                this.ctx.fillStyle = hexToRgba(color, opacity);
                 this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
                 
                 const bg = this.app.graphSettings.backgroundImage;
@@ -1105,14 +1122,26 @@
                 if (this.app.graphSettings.viewMode === 'full') {
                     this.drawAxisPart('x_neg', origin);
                     this.drawAxisPart('y_neg', origin);
+                    this.ctx.fillStyle = '#000000';
+                    this.ctx.beginPath();
+                    this.ctx.arc(origin.x, origin.y, 5, 0, Math.PI * 2);
+                    this.ctx.fill();
+                } else { // quadrant1
+                    const yAxisSettings = this.app.axisSettings['y_pos'];
+                    const xAxisSettings = this.app.axisSettings['x_pos'];
+                    const xOffset = (10 + yAxisSettings.width * 1.5) / 2 + 5;
+                    const yOffset = (10 + xAxisSettings.width * 1.5) / 2 + 5;
+
+                    const adjustedOrigin = { x: origin.x + xOffset, y: origin.y - yOffset };
+                    
+                    this.ctx.fillStyle = '#000000';
+                    this.ctx.beginPath();
+                    this.ctx.arc(adjustedOrigin.x, adjustedOrigin.y, 8, 0, Math.PI * 2);
+                    this.ctx.fill();
                 }
+
                 this.drawAxisPart('x_pos', origin);
                 this.drawAxisPart('y_pos', origin);
-
-                this.ctx.fillStyle = '#000000';
-                this.ctx.beginPath();
-                this.ctx.arc(origin.x, origin.y, 5, 0, Math.PI * 2);
-                this.ctx.fill();
             }
             
             drawAxisPart(key, origin) {
@@ -1147,11 +1176,15 @@
                 
                 if (this.app.graphSettings.viewMode === 'quadrant1') {
                     if (key === 'x_pos') {
-                        start.y -= 5;
-                        end.y -= 5;
+                        const yOffset = (10 + settings.width * 1.5) / 2 + 5;
+                        start.y -= yOffset;
+                        end.y -= yOffset;
+                        start.x += (10 + this.app.axisSettings['y_pos'].width * 1.5) / 2 + 5;
                     } else if (key === 'y_pos') {
-                        start.x += 5;
-                        end.x += 5;
+                        const xOffset = (10 + settings.width * 1.5) / 2 + 5;
+                        start.x += xOffset;
+                        end.x += xOffset;
+                        start.y -= (10 + this.app.axisSettings['x_pos'].width * 1.5) / 2 + 5;
                     }
                 }
 
@@ -1255,6 +1288,10 @@
             }
             resolveCollisions(movedTile) {
                 if (this.app.globalSettings.allowOverlap) return;
+                
+                const scale = this.app.canvasManager.getScale();
+                if (scale === 0) return; // Avoid division by zero if scale is invalid
+
                 for (let i = 0; i < 10; i++) { // Iterate a few times to settle
                     let wasCollision = false;
                     for (const otherTile of this.tiles) {
@@ -1262,10 +1299,14 @@
                         const dx = movedTile.x - otherTile.x;
                         const dy = movedTile.y - otherTile.y;
                         const dist = Math.sqrt(dx * dx + dy * dy);
-                        const min_dist = (movedTile.size / 2) + (otherTile.size / 2);
-                        if (dist < min_dist && dist > 0) {
+
+                        // Convert pixel-based size to logical units for correct comparison
+                        const min_dist_pixels = (movedTile.size / 2) + (otherTile.size / 2);
+                        const min_dist_logical = min_dist_pixels / scale;
+
+                        if (dist < min_dist_logical && dist > 0) {
                             wasCollision = true;
-                            const overlap = min_dist - dist;
+                            const overlap = min_dist_logical - dist;
                             const pushX = (dx / dist) * overlap;
                             const pushY = (dy / dist) * overlap;
                             movedTile.x += pushX / 2;
@@ -1288,11 +1329,12 @@
             get size() { return this.app.globalSettings.size; }
             isPointInside(px, py) {
                 const dx = this.x - px, dy = this.y - py;
-                return Math.sqrt(dx * dx + dy * dy) < this.size / 2;
+                return Math.sqrt(dx * dx + dy * dy) < (this.size / 2) / this.app.canvasManager.getScale();
             }
             getDeleteButtonRect() {
+                const {x, y} = this.app.canvasManager.logicalToCanvas(this.x, this.y);
                 const r = this.size / 2, angle = -Math.PI / 4, btnR = DELETE_BUTTON_SIZE / 2;
-                const cx = this.x + r * Math.cos(angle), cy = this.y + r * Math.sin(angle);
+                const cx = x + r * Math.cos(angle), cy = y + r * Math.sin(angle);
                 return { x: cx - btnR, y: cy - btnR, width: DELETE_BUTTON_SIZE, height: DELETE_BUTTON_SIZE };
             }
             isPointOnDeleteButton(px, py) {
@@ -1300,8 +1342,9 @@
                 return px >= rect.x && px <= rect.x + rect.width && py >= rect.y && py <= rect.y + rect.height;
             }
             drawHighlight(ctx) {
+                const {x, y} = this.app.canvasManager.logicalToCanvas(this.x, this.y);
                 ctx.strokeStyle = 'rgba(74, 144, 226, 0.9)'; ctx.lineWidth = 4;
-                ctx.beginPath(); this._drawShapePath(ctx, this.size / 2 + 5); ctx.closePath(); ctx.stroke();
+                ctx.beginPath(); this._drawShapePath(ctx, x, y, this.size / 2 + 5); ctx.closePath(); ctx.stroke();
             }
             drawDeleteButton(ctx) {
                 const rect = this.getDeleteButtonRect();
@@ -1313,30 +1356,30 @@
                 ctx.moveTo(rect.x + rect.width - 7, rect.y + 7); ctx.lineTo(rect.x + 7, rect.y + rect.height - 7);
                 ctx.stroke();
             }
-            _drawShapePath(ctx, r) {
+            _drawShapePath(ctx, cx, cy, r) {
                 const shape = this.app.globalSettings.shape;
                 switch (shape) {
                     case 'rounded-square':
                         const cornerRadius = r * 0.2;
-                        ctx.moveTo(this.x - r + cornerRadius, this.y - r);
-                        ctx.arcTo(this.x + r, this.y - r, this.x + r, this.y + r, cornerRadius);
-                        ctx.arcTo(this.x + r, this.y + r, this.x - r, this.y + r, cornerRadius);
-                        ctx.arcTo(this.x - r, this.y + r, this.x - r, this.y - r, cornerRadius);
-                        ctx.arcTo(this.x - r, this.y - r, this.x + r, this.y - r, cornerRadius);
+                        ctx.moveTo(cx - r + cornerRadius, cy - r);
+                        ctx.arcTo(cx + r, cy - r, cx + r, cy + r, cornerRadius);
+                        ctx.arcTo(cx + r, cy + r, cx - r, cy + r, cornerRadius);
+                        ctx.arcTo(cx - r, cy + r, cx - r, cy - r, cornerRadius);
+                        ctx.arcTo(cx - r, cy - r, cx + r, cy - r, cornerRadius);
                         break;
                     case 'pentagon':
                         for (let i = 0; i < 5; i++) {
-                            ctx.lineTo(this.x + r * Math.cos(-Math.PI / 2 + i * 2 * Math.PI / 5), this.y + r * Math.sin(-Math.PI / 2 + i * 2 * Math.PI / 5));
+                            ctx.lineTo(cx + r * Math.cos(-Math.PI / 2 + i * 2 * Math.PI / 5), cy + r * Math.sin(-Math.PI / 2 + i * 2 * Math.PI / 5));
                         }
                         break;
                     case 'hexagon':
                          for (let i = 0; i < 6; i++) {
-                            ctx.lineTo(this.x + r * Math.cos(i * Math.PI / 3), this.y + r * Math.sin(i * Math.PI / 3));
+                            ctx.lineTo(cx + r * Math.cos(i * Math.PI / 3), cy + r * Math.sin(i * Math.PI / 3));
                         }
                         break;
                     case 'circle':
                     default:
-                        ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
+                        ctx.arc(cx, cy, r, 0, Math.PI * 2);
                         break;
                 }
             }
@@ -1374,9 +1417,10 @@
                 });
             }
             draw(ctx, isExporting = false) {
+                const {x, y} = this.app.canvasManager.logicalToCanvas(this.x, this.y);
                 const s = this.app.globalSettings, r = this.size / 2;
                 ctx.save();
-                ctx.beginPath(); this._drawShapePath(ctx, r); ctx.closePath();
+                ctx.beginPath(); this._drawShapePath(ctx, x, y, r); ctx.closePath();
                 ctx.globalAlpha = this.bgOpacity;
                 ctx.fillStyle = this.app.canvasManager.resolveColor(this.bgColor);
                 ctx.fill();
@@ -1385,13 +1429,13 @@
                     ctx.clip();
                     const finalScale = this.baseScale * this.relativeScale;
                     const w = this.img.width * finalScale, h = this.img.height * finalScale;
-                    ctx.drawImage(this.img, this.x - w / 2 + this.offsetX, this.y - h / 2 + this.offsetY, w, h);
+                    ctx.drawImage(this.img, x - w / 2 + this.offsetX, y - h / 2 + this.offsetY, w, h);
                 }
                 ctx.restore();
                 if (s.borderWidth > 0) {
                     ctx.strokeStyle = this.app.canvasManager.resolveColor(s.borderColor);
                     ctx.lineWidth = s.borderWidth;
-                    ctx.beginPath(); this._drawShapePath(ctx, r - s.borderWidth / 2); ctx.closePath(); ctx.stroke();
+                    ctx.beginPath(); this._drawShapePath(ctx, x, y, r - s.borderWidth / 2); ctx.closePath(); ctx.stroke();
                 }
                 if (!isExporting) this.drawDeleteButton(ctx);
             }
@@ -1407,12 +1451,13 @@
             constructor(app, id, x, y) {
                 super(app, id, x, y, 'text');
                 this.text = 'New Text'; this.fontSize = 48; this.font = 'Noto Sans JP';
-                this.color = '#333333'; this.isBold = false; this.isItalic = false; this.textAlign = 'center';
+                this.color = '#333333'; this.isBold = false; this.isItalic = false; this.hasShadow = false;
             }
             draw(ctx, isExporting = false) {
+                const {x, y} = this.app.canvasManager.logicalToCanvas(this.x, this.y);
                 const s = this.app.globalSettings, r = this.size / 2;
                 ctx.save();
-                ctx.beginPath(); this._drawShapePath(ctx, r); ctx.closePath();
+                ctx.beginPath(); this._drawShapePath(ctx, x, y, r); ctx.closePath();
                 ctx.globalAlpha = this.bgOpacity;
                 ctx.fillStyle = this.app.canvasManager.resolveColor(this.bgColor);
                 ctx.fill();
@@ -1424,18 +1469,24 @@
                 }
                 ctx.restore();
                 ctx.save();
+                if (this.hasShadow) {
+                    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                    ctx.shadowBlur = 3;
+                    ctx.shadowOffsetX = 1;
+                    ctx.shadowOffsetY = 1;
+                }
                 ctx.fillStyle = this.color;
                 const style = `${this.isItalic ? 'italic ' : ''}${this.isBold ? 'bold ' : ''}`;
                 ctx.font = `${style}${this.fontSize}px "${this.font}"`;
-                ctx.textAlign = this.textAlign; ctx.textBaseline = 'middle';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 const lines = this.text.split('\n'), lineHeight = this.fontSize * 1.2;
                 const totalHeight = lines.length * lineHeight;
-                let startY = this.y - totalHeight / 2 + lineHeight / 2;
-                lines.forEach(line => { ctx.fillText(line, this.x, startY, this.size - 20); startY += lineHeight; });
+                let startY = y - totalHeight / 2 + lineHeight / 2;
+                lines.forEach(line => { ctx.fillText(line, x, startY, this.size - 20); startY += lineHeight; });
                 ctx.restore();
                 if (!isExporting) this.drawDeleteButton(ctx);
             }
-            getState() { return { type: this.type, id: this.id, x: this.x, y: this.y, text: this.text, fontSize: this.fontSize, font: this.font, color: this.color, isBold: this.isBold, isItalic: this.isItalic, textAlign: this.textAlign, bgColor: this.bgColor, bgOpacity: this.bgOpacity }; }
+            getState() { return { type: this.type, id: this.id, x: this.x, y: this.y, text: this.text, fontSize: this.fontSize, font: this.font, color: this.color, isBold: this.isBold, isItalic: this.isItalic, hasShadow: this.hasShadow, bgColor: this.bgColor, bgOpacity: this.bgOpacity }; }
             setState(state) { Object.assign(this, state); }
         }
 
@@ -1452,11 +1503,12 @@
                 this.stateManager = new StateManager(this);
                 this.draggingTile = null;
                 this.dragOffset = { x: 0, y: 0 };
+                this.resizeTimeout = null;
                 this.resetToDefaults(false);
                 this.initEventListeners();
                 this.loadFromLocalStorage();
                 this.uiManager.pushView('main');
-                this.canvasManager.draw();
+                this.resizeCanvas();
                 this.stateManager.recordState();
             }
             
@@ -1468,15 +1520,15 @@
                 this.axisSettings = {
                     x_neg: { label: 'ちかい', color: 'var(--red)', width: 5, labelSize: 25, fontFamily: '"Noto Sans JP", sans-serif', isBold: false, isItalic: false, hasShadow: false },
                     x_pos: { label: 'とおい', color: 'var(--blue)', width: 5, labelSize: 25, fontFamily: '"Noto Sans JP", sans-serif', isBold: false, isItalic: false, hasShadow: false },
-                    y_pos: { label: 'ちいさい', color: 'var(--yellow)', width: 5, labelSize: 25, fontFamily: '"Noto Sans JP", sans-serif', isBold: false, isItalic: false, hasShadow: false },
-                    y_neg: { label: 'おおきい', color: 'var(--green)', width: 5, labelSize: 25, fontFamily: '"Noto Sans JP", sans-serif', isBold: false, isItalic: false, hasShadow: false },
+                    y_pos: { label: 'おおきい', color: 'var(--yellow)', width: 5, labelSize: 25, fontFamily: '"Noto Sans JP", sans-serif', isBold: false, isItalic: false, hasShadow: false },
+                    y_neg: { label: 'ちいさい', color: 'var(--green)', width: 5, labelSize: 25, fontFamily: '"Noto Sans JP", sans-serif', isBold: false, isItalic: false, hasShadow: false },
                 };
                 if (this.tileManager) this.tileManager.tiles = [];
                 if (record) { this.stateManager.recordState(); this.canvasManager.draw(); }
             }
             
             resetGlobalSettings(record = true) {
-                this.globalSettings = { shape: 'circle', size: INITIAL_TILE_SIZE, borderWidth: 4, borderColor: '#333333', allowOverlap: false };
+                this.globalSettings = { shape: 'circle', size: 80, borderWidth: 4, borderColor: '#333333', allowOverlap: false };
                 if(record) {
                     this.stateManager.recordState();
                     this.canvasManager.draw();
@@ -1486,6 +1538,7 @@
             resetGraphSettings(record = true) {
                 this.graphSettings = { 
                     bgColor: '#FFFFFF', 
+                    bgColorOpacity: 1.0,
                     grid: { style: 'solid', interval: 60, width: 1, color: '#E0E0E0' },
                     backgroundImage: { src: null, opacity: 1, scale: 1, offsetX: 0, offsetY: 0 },
                     viewMode: 'full'
@@ -1501,8 +1554,8 @@
                 const defaultAxisSettings = {
                     x_neg: { label: 'ちかい', color: 'var(--red)', width: 5, labelSize: 25, fontFamily: '"Noto Sans JP", sans-serif', isBold: false, isItalic: false, hasShadow: false },
                     x_pos: { label: 'とおい', color: 'var(--blue)', width: 5, labelSize: 25, fontFamily: '"Noto Sans JP", sans-serif', isBold: false, isItalic: false, hasShadow: false },
-                    y_pos: { label: 'ちいさい', color: 'var(--yellow)', width: 5, labelSize: 25, fontFamily: '"Noto Sans JP", sans-serif', isBold: false, isItalic: false, hasShadow: false },
-                    y_neg: { label: 'おおきい', color: 'var(--green)', width: 5, labelSize: 25, fontFamily: '"Noto Sans JP", sans-serif', isBold: false, isItalic: false, hasShadow: false },
+                    y_pos: { label: 'おおきい', color: 'var(--yellow)', width: 5, labelSize: 25, fontFamily: '"Noto Sans JP", sans-serif', isBold: false, isItalic: false, hasShadow: false },
+                    y_neg: { label: 'ちいさい', color: 'var(--green)', width: 5, labelSize: 25, fontFamily: '"Noto Sans JP", sans-serif', isBold: false, isItalic: false, hasShadow: false },
                 };
                 this.axisSettings[axisKey] = { ...defaultAxisSettings[axisKey] };
                 this.stateManager.recordState();
@@ -1527,19 +1580,42 @@
                     if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); this.stateManager.undo(); }
                     if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'Z'))) { e.preventDefault(); this.stateManager.redo(); }
                 });
+                window.addEventListener('resize', () => {
+                    clearTimeout(this.resizeTimeout);
+                    this.resizeTimeout = setTimeout(() => this.resizeCanvas(), 100);
+                });
+            }
+
+            resizeCanvas() {
+                const container = document.getElementById('canvas-container');
+                const rect = container.getBoundingClientRect();
+                const padding = 40;
+                
+                const newWidth = rect.width - padding;
+                const newHeight = rect.height - padding;
+
+                this.canvas.width = newWidth > 0 ? newWidth : 0;
+                this.canvas.height = newHeight > 0 ? newHeight : 0;
+                
+                this.canvasManager.draw();
             }
 
             handleMenuClick(view) {
                 const currentView = this.uiManager.viewStack[this.uiManager.viewStack.length - 1];
-                if (['tile', 'text', 'axis', 'export', 'help'].includes(currentView.view)) {
+                if (currentView.view === view) {
                     this.uiManager.popView();
+                } else {
+                    while (this.uiManager.viewStack.length > 1) {
+                       this.uiManager.popView();
+                    }
+                    this.uiManager.pushView(view);
                 }
-                this.uiManager.pushView(view);
             }
 
             onMouseDown(e) {
                 const { x, y } = this.getCanvasCoords(e);
-                const tile = this.tileManager.getTileAt(x, y);
+                const logicalCoords = this.canvasManager.canvasToLogical(x, y);
+                const tile = this.tileManager.getTileAt(logicalCoords.x, logicalCoords.y);
                 if (tile && tile.isPointOnDeleteButton(x, y)) {
                     this.tileManager.removeTile(tile.id);
                     const currentView = this.uiManager.viewStack[this.uiManager.viewStack.length - 1];
@@ -1555,7 +1631,7 @@
                 
                 if (tile) {
                     this.draggingTile = tile;
-                    this.dragOffset = { x: tile.x - x, y: tile.y - y };
+                    this.dragOffset = { x: tile.x - logicalCoords.x, y: tile.y - logicalCoords.y };
                     this.tileManager.tiles = this.tileManager.tiles.filter(t => t !== tile);
                     this.tileManager.tiles.push(tile);
                     this.canvas.style.cursor = 'grabbing';
@@ -1564,14 +1640,17 @@
 
             onMouseMove(e) {
                 const { x, y } = this.getCanvasCoords(e);
+                const logicalCoords = this.canvasManager.canvasToLogical(x, y);
                 
                 if (this.draggingTile) {
-                    const r = this.draggingTile.size / 2;
-                    this.draggingTile.x = Math.max(r, Math.min(this.canvas.width - r, x + this.dragOffset.x));
-                    this.draggingTile.y = Math.max(r, Math.min(this.canvas.height - r, y + this.dragOffset.y));
+                    const scale = this.canvasManager.getScale();
+                    const logicalR = scale > 0 ? (this.draggingTile.size / 2) / scale : 0;
+                    
+                    this.draggingTile.x = Math.max(this.xRange.min + logicalR, Math.min(this.xRange.max - logicalR, logicalCoords.x + this.dragOffset.x));
+                    this.draggingTile.y = Math.max(this.yRange.min + logicalR, Math.min(this.yRange.max - logicalR, logicalCoords.y + this.dragOffset.y));
                     this.canvasManager.draw();
                 } else {
-                    this.canvas.style.cursor = this.tileManager.getTileAt(x, y) ? 'pointer' : 'grab';
+                    this.canvas.style.cursor = this.tileManager.getTileAt(logicalCoords.x, logicalCoords.y) ? 'pointer' : 'grab';
                 }
             }
 
@@ -1587,45 +1666,75 @@
 
             onDoubleClick(e) {
                 const { x, y } = this.getCanvasCoords(e);
-                const tile = this.tileManager.getTileAt(x, y);
-                const axisKey = this.getAxisPartAt(x, y);
+                const logicalCoords = this.canvasManager.canvasToLogical(x, y);
+                const tile = this.tileManager.getTileAt(logicalCoords.x, logicalCoords.y);
+                const axisKey = this.getAxisPartAt(x, y) || this.getAxisLabelAt(x, y);
 
-                const currentView = this.uiManager.viewStack[this.uiManager.viewStack.length - 1];
-                if (['tile', 'text', 'axis'].includes(currentView.view)) {
+                const targetView = tile ? tile.type : (axisKey ? 'axis' : null);
+                const targetData = tile || axisKey;
+
+                // If we are not opening a context panel, check to add a text tile
+                if (!targetView) {
+                    let currentView = this.uiManager.viewStack[this.uiManager.viewStack.length - 1];
+                    if (['export', 'help', 'tile', 'text', 'axis'].includes(currentView.view)) return;
+                    
+                    const newTile = new TextTile(this, null, logicalCoords.x, logicalCoords.y);
+                    this.tileManager.addTile(newTile);
+                    this.stateManager.recordState();
+                    this.canvasManager.draw();
+                    this.uiManager.pushView('text', newTile);
+                    return;
+                }
+
+                // If we are opening a context panel, clear other views and push the new one
+                while (this.uiManager.viewStack.length > 1) {
                     this.uiManager.popView();
                 }
-
-                if (tile) {
-                    this.uiManager.pushView(tile.type, tile);
-                    return;
-                }
-                if (axisKey) {
-                    this.uiManager.pushView('axis', axisKey);
-                    return;
-                }
-                
-                const newTile = new TextTile(this, null, x, y);
-                this.tileManager.addTile(newTile);
-                this.stateManager.recordState(); this.canvasManager.draw();
-                this.uiManager.pushView('text', newTile);
+                this.uiManager.pushView(targetView, targetData);
             }
 
-            onDrop(e) {
+            async onDrop(e) {
                 e.preventDefault();
                 const { x, y } = this.getCanvasCoords(e);
-                const file = e.dataTransfer.files[0];
-                if (file && file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const tile = new ImageTile(this, null, x, y, event.target.result);
-                        tile.loadImage().then(() => {
-                            this.tileManager.addTile(tile);
-                            this.tileManager.resolveCollisions(tile);
-                            this.stateManager.recordState();
-                            this.canvasManager.draw();
-                        });
-                    };
-                    reader.readAsDataURL(file);
+                const initialLogicalCoords = this.canvasManager.canvasToLogical(x, y);
+                const files = e.dataTransfer.files;
+
+                if (files.length === 0) return;
+
+                const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+                if (imageFiles.length === 0) return;
+
+                const newTiles = [];
+
+                const fileReadPromises = imageFiles.map(file => {
+                    return new Promise(resolve => {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            // Add a small random offset for each tile
+                            const offsetX = (Math.random() - 0.5) * 20;
+                            const offsetY = (Math.random() - 0.5) * 20;
+                            const logicalX = initialLogicalCoords.x + offsetX;
+                            const logicalY = initialLogicalCoords.y + offsetY;
+
+                            const tile = new ImageTile(this, null, logicalX, logicalY, event.target.result);
+                            tile.loadImage().then(() => {
+                                newTiles.push(tile);
+                                resolve();
+                            });
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                });
+
+                await Promise.all(fileReadPromises);
+
+                if (newTiles.length > 0) {
+                    newTiles.forEach(tile => {
+                        this.tileManager.addTile(tile);
+                        this.tileManager.resolveCollisions(tile);
+                    });
+                    this.stateManager.recordState();
+                    this.canvasManager.draw();
                 }
             }
             
@@ -1633,11 +1742,60 @@
             
             getAxisPartAt(px, py) {
                 const origin = this.canvasManager.logicalToCanvas(0,0);
-                const tolerance = 10;
-                if (Math.abs(py - origin.y) < tolerance) { return px < origin.x ? 'x_neg' : 'x_pos'; }
-                if (Math.abs(px - origin.x) < tolerance) { return py < origin.y ? 'y_pos' : 'y_neg'; }
+                const tolerance = 15;
+                if (this.graphSettings.viewMode === 'full') {
+                    if (Math.abs(py - origin.y) < tolerance) { return px < origin.x ? 'x_neg' : 'x_pos'; }
+                    if (Math.abs(px - origin.x) < tolerance) { return py < origin.y ? 'y_pos' : 'y_neg'; }
+                } else {
+                    if (py > origin.y - tolerance && px > origin.x - tolerance) {
+                        if (Math.abs(py - origin.y) < tolerance) return 'x_pos';
+                        if (Math.abs(px - origin.x) < tolerance) return 'y_pos';
+                    }
+                }
                 return null;
             }
+            
+            getAxisLabelAt(px, py) {
+                const keys = this.graphSettings.viewMode === 'full'
+                    ? ['x_pos', 'x_neg', 'y_pos', 'y_neg']
+                    : ['x_pos', 'y_pos'];
+
+                for (const key of keys) {
+                    const settings = this.axisSettings[key];
+                    const { ctx } = this.canvasManager;
+                    const style = `${settings.isItalic ? 'italic ' : ''}${settings.isBold ? 'bold ' : ''}`;
+                    ctx.font = `${style}${settings.labelSize}px ${settings.fontFamily}`;
+
+                    const origin = this.canvasManager.logicalToCanvas(0, 0);
+                    let end, textAlign, textBaseline;
+                    
+                    if (key === 'x_neg') { end = {x: 0, y: origin.y}; textAlign = 'left'; textBaseline = 'bottom'; } 
+                    else if (key === 'x_pos') { end = {x: this.canvas.width, y: origin.y}; textAlign = 'right'; textBaseline = 'bottom'; } 
+                    else if (key === 'y_pos') { end = {x: origin.x, y: 0}; textAlign = 'left'; textBaseline = 'top'; } 
+                    else { end = {x: origin.x, y: this.canvas.height}; textAlign = 'left'; textBaseline = 'bottom'; }
+                    
+                    const textPos = { ...end };
+                    if (key === 'x_neg') { textPos.x += 10; textPos.y -= 10; } 
+                    else if (key === 'x_pos') { textPos.x -= 10; textPos.y -= 10; } 
+                    else if (key === 'y_pos') { textPos.x += 10; textPos.y += 10; } 
+                    else { textPos.x += 10; textPos.y -= 10; }
+                    
+                    const metrics = ctx.measureText(settings.label);
+                    let x1, y1, x2, y2;
+
+                    if (textAlign === 'left') { x1 = textPos.x; x2 = textPos.x + metrics.width; } 
+                    else if (textAlign === 'right') { x1 = textPos.x - metrics.width; x2 = textPos.x; }
+                    
+                    if (textBaseline === 'top') { y1 = textPos.y; y2 = textPos.y + settings.labelSize; } 
+                    else if (textBaseline === 'bottom') { y1 = textPos.y - settings.labelSize; y2 = textPos.y; }
+
+                    if (px >= x1 && px <= x2 && py >= y1 && py <= y2) {
+                        return key;
+                    }
+                }
+                return null;
+            }
+
 
             loadBackgroundImage(src) {
                 this.bgImage.onload = () => {
@@ -1672,9 +1830,14 @@
             saveToLocalStorage() { try { localStorage.setItem('distributionMapProject', this.stateManager.createSnapshot()); } catch (e) { console.error(e); } }
             loadFromLocalStorage() { try { const state = localStorage.getItem('distributionMapProject'); if (state) this.stateManager.restoreFromSnapshot(state); } catch(e) { console.error(e); } }
             exportImage() {
+                const formatSelect = document.getElementById('export-format-select');
+                const format = formatSelect ? formatSelect.value : 'png';
+                const mimeType = `image/${format}`;
+                const extension = format;
+
                 this.canvasManager.draw(true); // Draw for export (no UI elements)
-                const dataUrl = this.canvas.toDataURL('image/png');
-                const a = document.createElement('a'); a.href = dataUrl; a.download = 'distribution-map.png'; a.click();
+                const dataUrl = this.canvas.toDataURL(mimeType, format === 'jpeg' ? 0.92 : undefined);
+                const a = document.createElement('a'); a.href = dataUrl; a.download = `distribution-map.${extension}`; a.click();
                 this.canvasManager.draw(false); // Draw back to normal
             }
             showModal(title, message, callback) {
